@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
   const dbConnected = isDbConnected();
   res.json({
     status: 'ONLINE',
-    service: 'CaseConnect Core API',
+    service: 'CaseConnect AICTE Monitoring API',
     version: '2.0.0',
     database: {
       connected: dbConnected,
@@ -66,6 +66,50 @@ app.post('/api/admin/bootstrap-benchmark', authenticateToken, authorizeRoles(ROL
   try {
     const result = await loadBenchmarkData();
     res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/admin/students - Authorized regulatory review of registered students
+app.get('/api/admin/students', authenticateToken, authorizeRoles(
+  ROLES.SUPER_ADMIN, 
+  ROLES.SENIOR_MONITORING_OFFICER, 
+  ROLES.BUREAU_OFFICER, 
+  ROLES.REGIONAL_REVIEWER
+), async (req, res, next) => {
+  try {
+    const Student = require('./models/Student');
+    const { query, college, page = 1, limit = 20 } = req.query;
+    const filter = {};
+
+    if (query) {
+      filter.$or = [
+        { fullName: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+        { studentIdNumber: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    if (college) {
+      filter.college = { $regex: college, $options: 'i' };
+    }
+
+    const skip = (Math.max(1, parseInt(page)) - 1) * parseInt(limit);
+    const total = await Student.countDocuments(filter);
+    const students = await Student.find(filter)
+      .select('-passwordHash')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      students
+    });
   } catch (err) {
     next(err);
   }
@@ -144,7 +188,7 @@ async function startServer() {
 
   const server = app.listen(PORT, () => {
     console.log(`=======================================================`);
-    console.log(` CaseConnect Institutional Monitoring Platform Online`);
+    console.log(` CaseConnect — AICTE Institution Complaint Monitoring Platform`);
     console.log(` Database: MongoDB Campus Database`);
     console.log(` Server Port: http://localhost:${PORT}`);
     console.log(` Web Interface: http://localhost:${PORT}`);

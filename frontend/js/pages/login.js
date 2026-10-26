@@ -18,8 +18,20 @@ function renderLoginPage(container) {
             Case<span style="color: var(--color-primary);">Connect</span> Official Portal
           </h2>
           <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.45; max-width: 380px; margin: 0 auto;">
-            Centralized Institution Complaint & Regulatory Monitoring Platform
+            AICTE Integrated Institution Complaint Monitoring & Status Dashboard
           </p>
+        </div>
+
+        <!-- Portal Role Selector Pill -->
+        <div class="auth-portal-selector">
+          <a href="#/student-login" class="auth-portal-btn" style="text-decoration: none;">
+            ${window.Icons?.users?.('w-4 h-4') || '🎓'}
+            <span>Student Portal</span>
+          </a>
+          <button type="button" class="auth-portal-btn active">
+            ${window.Icons?.shield?.('w-4 h-4') || '🏛️'}
+            <span>Official Console</span>
+          </button>
         </div>
 
         <!-- Navigation Tabs: Sign-In vs Register -->

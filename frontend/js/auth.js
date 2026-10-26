@@ -33,6 +33,10 @@ class AuthManager {
     return roles.includes(this.currentUser.role);
   }
 
+  isStudent() {
+    return !!this.currentUser && this.currentUser.role === 'STUDENT';
+  }
+
   async login(email, password) {
     const res = await window.API.post('/auth/login', { email, password });
     if (res.success && res.token) {
@@ -55,13 +59,36 @@ class AuthManager {
     throw new Error(res.message || 'Registration failed');
   }
 
+  async studentLogin(email, password) {
+    const res = await window.API.post('/auth/student/login', { email, password });
+    if (res.success && res.token) {
+      window.API.setToken(res.token);
+      this.currentUser = res.student || res.user;
+      localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+      return this.currentUser;
+    }
+    throw new Error(res.message || 'Student login failed');
+  }
+
+  async studentRegister(registrationData) {
+    const res = await window.API.post('/auth/student/register', registrationData);
+    if (res.success && res.token) {
+      window.API.setToken(res.token);
+      this.currentUser = res.student || res.user;
+      localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+      return this.currentUser;
+    }
+    throw new Error(res.message || 'Student registration failed');
+  }
+
   async fetchMe() {
     try {
-      const res = await window.API.get('/auth/me');
-      if (res.success && res.user) {
-        this.currentUser = res.user;
-        localStorage.setItem('caseconnect_user', JSON.stringify(res.user));
-        return res.user;
+      const endpoint = this.isStudent() ? '/auth/student/profile' : '/auth/me';
+      const res = await window.API.get(endpoint);
+      if (res.success && (res.user || res.student)) {
+        this.currentUser = res.student || res.user;
+        localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+        return this.currentUser;
       }
     } catch (e) {
       this.logout();
@@ -69,11 +96,22 @@ class AuthManager {
     return null;
   }
 
+  async updateStudentProfile(profileData) {
+    const res = await window.API.put('/auth/student/profile', profileData);
+    if (res.success && (res.student || res.user)) {
+      this.currentUser = res.student || res.user;
+      localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+      return this.currentUser;
+    }
+    throw new Error(res.message || 'Failed to update profile');
+  }
+
   logout() {
+    const wasStudent = this.isStudent();
     window.API.setToken(null);
     this.currentUser = null;
     localStorage.removeItem('caseconnect_user');
-    window.location.hash = '#/login';
+    window.location.hash = wasStudent ? '#/student-login' : '#/login';
   }
 }
 

@@ -214,8 +214,179 @@ async function run() {
       console.log(`   [INFO] Status returned: ${invalidMethodRes.status}\n`);
     }
 
+    // 13. Student Registration Validation Suite
+    console.log('13. Verifying Student Registration & Validation Suite...');
+    const studentSuffix = Date.now().toString().slice(-4);
+    const validStudentEmail = `student.test.${studentSuffix}@university.edu.in`;
+
+    // 13a. Missing required field check
+    const missingFieldRes = await request('/api/auth/student/register', {
+      method: 'POST',
+      body: {
+        fullName: 'Test Student',
+        email: validStudentEmail
+        // missing college, course, branch, academicYear, password
+      }
+    });
+    if (missingFieldRes.status !== 400) {
+      throw new Error(`Expected 400 for missing fields, got ${missingFieldRes.status}`);
+    }
+    console.log(`   [PASS] Missing required fields properly rejected: "${missingFieldRes.data.message}"`);
+
+    // 13b. Password mismatch check
+    const mismatchRes = await request('/api/auth/student/register', {
+      method: 'POST',
+      body: {
+        fullName: 'Test Student',
+        email: validStudentEmail,
+        college: 'Apex Institute of Technology',
+        course: 'B.Tech',
+        branch: 'Computer Science',
+        academicYear: '3rd Year',
+        password: 'Password123!',
+        confirmPassword: 'DifferentPassword123!'
+      }
+    });
+    if (mismatchRes.status !== 400) {
+      throw new Error(`Expected 400 for password mismatch, got ${mismatchRes.status}`);
+    }
+    console.log(`   [PASS] Password mismatch properly rejected: "${mismatchRes.data.message}"`);
+
+    // 13c. Weak password check (< 8 chars)
+    const weakPwdRes = await request('/api/auth/student/register', {
+      method: 'POST',
+      body: {
+        fullName: 'Test Student',
+        email: validStudentEmail,
+        college: 'Apex Institute of Technology',
+        course: 'B.Tech',
+        branch: 'Computer Science',
+        academicYear: '3rd Year',
+        password: 'short',
+        confirmPassword: 'short'
+      }
+    });
+    if (weakPwdRes.status !== 400) {
+      throw new Error(`Expected 400 for weak password, got ${weakPwdRes.status}`);
+    }
+    console.log(`   [PASS] Short password properly rejected: "${weakPwdRes.data.message}"`);
+
+    // 13d. Valid Student Registration
+    const validRegRes = await request('/api/auth/student/register', {
+      method: 'POST',
+      body: {
+        fullName: 'Aarav Mehta',
+        email: validStudentEmail,
+        college: 'Apex Institute of Technology & Engineering',
+        course: 'B.Tech / B.E.',
+        branch: 'Electronics and Communication',
+        academicYear: '2nd Year (Sem 3-4)',
+        studentIdNumber: `STU-ECE-${studentSuffix}`,
+        phoneNumber: '+91 98765 11111',
+        password: 'StudentPass@2026',
+        confirmPassword: 'StudentPass@2026'
+      }
+    });
+
+    if (validRegRes.status !== 201 || !validRegRes.data.token) {
+      throw new Error(`Valid student registration failed: ${JSON.stringify(validRegRes.data)}`);
+    }
+    if (validRegRes.data.student.passwordHash) {
+      throw new Error('Security flaw: student passwordHash leaked in registration response!');
+    }
+    const studentToken = validRegRes.data.token;
+    console.log(`   [PASS] Student registered successfully: ${validRegRes.data.student.fullName} (${validRegRes.data.student.email})`);
+    console.log('   [PASS] Zero passwordHash leakage in registration payload.');
+
+    // 13e. Duplicate Student Registration Prevention
+    const dupStudentRes = await request('/api/auth/student/register', {
+      method: 'POST',
+      body: {
+        fullName: 'Duplicate Aarav Mehta',
+        email: validStudentEmail,
+        college: 'Another College',
+        course: 'BCA',
+        branch: 'IT',
+        academicYear: '1st Year',
+        password: 'StudentPass@2026',
+        confirmPassword: 'StudentPass@2026'
+      }
+    });
+    if (dupStudentRes.status !== 409) {
+      throw new Error(`Duplicate student email should return 409 Conflict, got ${dupStudentRes.status}`);
+    }
+    console.log(`   [PASS] Duplicate student email rejected with HTTP 409: "${dupStudentRes.data.message}"\n`);
+
+    // 14. Student Authentication & Profile Retrieval
+    console.log('14. Verifying Student Login and Session Retrieval...');
+    
+    // 14a. Invalid student password
+    const wrongPwdStudent = await request('/api/auth/student/login', {
+      method: 'POST',
+      body: {
+        email: validStudentEmail,
+        password: 'WrongPassword@999'
+      }
+    });
+    if (wrongPwdStudent.status !== 401) {
+      throw new Error(`Invalid student password was not rejected with HTTP 401, got ${wrongPwdStudent.status}`);
+    }
+    console.log(`   [PASS] Incorrect student password rejected: "${wrongPwdStudent.data.message}"`);
+
+    // 14b. Valid student login
+    const validStudentLogin = await request('/api/auth/student/login', {
+      method: 'POST',
+      body: {
+        email: validStudentEmail,
+        password: 'StudentPass@2026'
+      }
+    });
+    if (validStudentLogin.status !== 200 || !validStudentLogin.data.token) {
+      throw new Error(`Valid student login failed: ${JSON.stringify(validStudentLogin.data)}`);
+    }
+    console.log(`   [PASS] Student authenticated: ${validStudentLogin.data.student.fullName} (${validStudentLogin.data.student.role})`);
+
+    // 14c. Student Profile Retrieval (/api/auth/student/profile)
+    const profileRes = await request('/api/auth/student/profile', {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    if (profileRes.status !== 200 || !profileRes.data.student || profileRes.data.student.email !== validStudentEmail) {
+      throw new Error(`Student profile retrieval failed: ${JSON.stringify(profileRes.data)}`);
+    }
+    console.log(`   [PASS] Student profile retrieved via authenticated token (${profileRes.data.student.college}, ${profileRes.data.student.course}).\n`);
+
+    // 15. Student Role-Based Authorization & Boundary Checks
+    console.log('15. Verifying Student RBAC Protections & Access Guard...');
+    
+    // 15a. Student attempting to access official-only admin roster
+    const studentAccessDenied = await request('/api/users', {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    if (studentAccessDenied.status !== 403) {
+      throw new Error(`Student should be forbidden (403) from accessing official users, got ${studentAccessDenied.status}`);
+    }
+    console.log(`   [PASS] Official endpoint protected against student token (HTTP 403 Forbidden).`);
+
+    // 15b. Official reviewing student registrations (/api/admin/students)
+    const adminReviewStudents = await request('/api/admin/students', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    if (adminReviewStudents.status !== 200 || !Array.isArray(adminReviewStudents.data.students)) {
+      throw new Error(`Admin failed to review students: ${JSON.stringify(adminReviewStudents.data)}`);
+    }
+    console.log(`   [PASS] Authorized official accessed student registry (${adminReviewStudents.data.students.length} registered students found).`);
+
+    // 15c. Student attempting to access student review endpoint (should be 403)
+    const studentReviewDenied = await request('/api/admin/students', {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    if (studentReviewDenied.status !== 403) {
+      throw new Error(`Student should be forbidden from accessing admin student list, got ${studentReviewDenied.status}`);
+    }
+    console.log(`   [PASS] Ordinary student forbidden from viewing all students (HTTP 403 Forbidden).\n`);
+
     console.log('======================================================');
-    console.log(' ALL 12 END-TO-END VERIFICATION CHECKS PASSED (100%)');
+    console.log(' ALL 15 END-TO-END VERIFICATION CHECKS PASSED (100%)');
     console.log('======================================================\n');
   } catch (err) {
     console.error('\n❌ Verification Failed:', err.message);

@@ -214,7 +214,7 @@
 <h2>2. System Architecture</h2>
 <p>CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by MongoDB.</p>
 <ul>
-<li><strong>Client Tier (SPA):</strong> HTML5, Vanilla ES6+ Modular Architecture, Tailwind CSS Utility Layer &amp; Clean Elevated Card System, Client Hash Router (<code>#/dashboard</code>, <code>#/cases</code>, <code>#/institutions</code>), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).</li>
+<li><strong>Client Tier (SPA):</strong> HTML5, Vanilla ES6+ Modular Architecture, Standard CSS Design System &amp; Clean Elevated Card System, Client Hash Router (<code>#/dashboard</code>, <code>#/cases</code>, <code>#/institutions</code>), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).</li>
 <li><strong>Server Tier (Node.js &amp; Express):</strong> Express.js Application Server (Port 5000), CORS Preflight &amp; Global Security Headers (<code>nosniff</code>, <code>SAMEORIGIN</code>, <code>XSS block</code>), JWT Authentication Middleware &amp; Role-Based Access Control (RBAC), 405 Method Not Allowed Interceptor &amp; Safe JSON Error Responder.</li>
 <li><strong>Automated Engines:</strong></li>
 <p>  - 3-Layer Overlap Detection Engine (Tokenization + Jaccard Similarity).</p>

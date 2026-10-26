@@ -28,20 +28,38 @@ class AppRouter {
     window.renderSidebar?.();
 
     const isAuthenticated = window.Auth.isAuthenticated();
+    const isStudent = window.Auth.isStudent();
+    const isPublicAuthRoute = path === '/login' || path === '/student-login' || path === '/student-register';
 
     // Route guard 1: Non-authenticated trying to access protected routes
-    if (!isAuthenticated && path !== '/login') {
-      window.location.hash = '#/login';
+    if (!isAuthenticated && !isPublicAuthRoute) {
+      window.location.hash = '#/student-login';
       return;
     }
 
-    // Route guard 2: Authenticated user visiting /login
-    if (isAuthenticated && path === '/login') {
-      window.location.hash = '#/dashboard';
+    // Route guard 2: Authenticated user visiting public auth routes
+    if (isAuthenticated && isPublicAuthRoute) {
+      window.location.hash = isStudent ? '#/student-dashboard' : '#/dashboard';
       return;
     }
 
     if (!this.mainContainer) return;
+
+    // Route guard 3: Student trying to access official-only administrative modules
+    const officialOnlyRoutes = ['/dashboard', '/bureaus', '/workload', '/overlaps', '/pending-overdue', '/reports', '/users', '/roles', '/audit-logs'];
+    if (isAuthenticated && isStudent && officialOnlyRoutes.includes(path)) {
+      this.mainContainer.innerHTML = `
+        <div class="empty-state" style="margin-top: 2rem;">
+          <div class="empty-state-icon" style="color: var(--color-primary); width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center;">
+            ${window.Icons?.shield?.('w-6 h-6') || '🛡️'}
+          </div>
+          <div class="empty-state-title" style="margin-top: 1rem;">Access Restricted (403)</div>
+          <div class="empty-state-desc">This administrative module is restricted to authorized AICTE regulatory officials.</div>
+          <a href="#/student-dashboard" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">Return to Student Dashboard</a>
+        </div>
+      `;
+      return;
+    }
 
     // Match dynamic routes like /cases/:id or /institutions/:id
     const caseMatch = path.match(/^\/cases\/([a-zA-Z0-9_-]+)$/);

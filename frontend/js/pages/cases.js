@@ -18,7 +18,7 @@ async function renderCasesPage(container) {
           All Registered Cases & Complaints
         </h1>
         <p style="font-size: 0.8rem; color: var(--color-text-muted);">
-          Comprehensive statutory case register across Regulation Bureau, PGRC, Approval Bureau, and Cells.
+          Comprehensive statutory case register across AICTE Regulation Bureau, PGRC, Approval Bureau, and Cells.
         </p>
       </div>
 

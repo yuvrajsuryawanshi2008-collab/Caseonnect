@@ -10,7 +10,7 @@ async function renderOverlapsPage(container) {
           Cross-Bureau Overlap Detection & Review
         </h1>
         <p style="font-size: 0.8rem; color: var(--color-text-muted);">
-          Layered explainable heuristic matching identifying related complaints handled across different regulatory bureaus concerning the same institution.
+          Layered explainable heuristic matching identifying related complaints handled across different AICTE regulatory bureaus concerning the same institution.
         </p>
       </div>
 
@@ -33,7 +33,7 @@ async function renderOverlapsPage(container) {
             Regulatory Safeguard Notice: Zero Auto-Merge Policy
           </div>
           <div style="font-size: 0.78rem; color: #78350f; line-height: 1.45;">
-            The Council monitoring system <strong>never automatically merges, transfers, or closes cases</strong> based on similarity scores. Different complaints against the same institution may address legitimate separate statutory matters. Every match requires authorized human adjudication before recording relations or joint coordination.
+            The AICTE monitoring system <strong>never automatically merges, transfers, or closes cases</strong> based on similarity scores. Different complaints against the same institution may address legitimate separate statutory matters. Every match requires authorized human adjudication before recording relations or joint coordination.
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@ async function fetchAndRenderOverlaps(statusFilter = 'PENDING_REVIEW') {
           <div class="empty-state-title">${statusFilter === 'PENDING_REVIEW' ? 'No Pending Overlaps Requiring Review' : 'No Reviewed History Found'}</div>
           <div class="empty-state-desc">
             ${statusFilter === 'PENDING_REVIEW' 
-              ? 'All cross-bureau complaint records are currently distinct or have already been reviewed by authorized officials.' 
+              ? 'All cross-bureau complaint records are currently distinct or have already been reviewed by authorized AICTE officials.' 
               : 'Adjudicated overlap records will appear here once reviewed.'}
           </div>
         </div>

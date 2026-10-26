@@ -7,10 +7,10 @@ async function renderDashboardPage(container) {
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
       <div>
         <h1 style="font-size: 1.45rem; font-weight: 800; color: var(--color-text); letter-spacing: -0.02em;">
-          Regulatory Monitoring Dashboard
+          AICTE Complaint Monitoring Dashboard
         </h1>
         <p style="font-size: 0.8rem; color: var(--color-text-muted);">
-          Consolidated cross-bureau complaint monitoring, active investigations, and institutional scrutiny alerts.
+          Consolidated cross-bureau complaint monitoring, active investigations, and AICTE institutional scrutiny alerts.
         </p>
       </div>
 
@@ -140,7 +140,7 @@ async function renderDashboardPage(container) {
       <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
         <div>
           <h3 class="card-title" style="margin-bottom: 0.15rem;">Recent Complaint Docket Registrations</h3>
-          <p class="card-desc">Latest cases filed across Council Bureaus, Regulatory Cells, and Regional Directorates</p>
+          <p class="card-desc">Latest cases filed across AICTE Bureaus, Regulatory Cells, and Regional Directorates</p>
         </div>
         <a href="#/cases" class="btn btn-secondary btn-sm">All Cases →</a>
       </div>

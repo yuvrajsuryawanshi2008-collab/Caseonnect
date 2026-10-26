@@ -7,10 +7,10 @@ async function renderBureausPage(container) {
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
       <div>
         <h1 style="font-size: 1.45rem; font-weight: 800; color: var(--color-text); letter-spacing: -0.02em;">
-          Council Bureaus & Grievance Cells
+          AICTE Bureaus & Grievance Cells
         </h1>
         <p style="font-size: 0.8rem; color: var(--color-text-muted);">
-          Operational jurisdictions, officer rosters, workload capacity, and inter-bureau coordination dockets.
+          Operational jurisdictions, officer rosters, workload capacity, and AICTE inter-bureau coordination dockets.
         </p>
       </div>
 

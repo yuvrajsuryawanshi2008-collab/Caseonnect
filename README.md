@@ -1,12 +1,12 @@
-# CaseConnect — Centralized Institution Complaint & Regulatory Monitoring Platform
+# CaseConnect — AICTE Integrated Institution Complaint Monitoring & Status Dashboard
 
-CaseConnect is an enterprise regulatory web platform designed for monitoring, tracking, and coordinating technical education institution complaints across regulatory bureaus (Regulation Bureau, Public Grievance Redressal Cell, Approval Bureau, Policy Bureau, and Chief Vigilance Cell).
+CaseConnect is an enterprise regulatory web platform designed for monitoring, tracking, and coordinating AICTE-approved technical education institution complaints across regulatory bureaus (Regulation Bureau, Public Grievance Redressal Cell, Approval Bureau, Policy Bureau, and Chief Vigilance Cell).
 
 ---
 
 ## 1. Architecture & Technology Stack
 
-- **Frontend**: HTML5, Modern ES6+ Modular JavaScript, Tailwind CSS utility layer, Enterprise Design System inspired by the CampusX layout (clean elevated cards, sticky navigation header, Ctrl+K quick search, accessible modals, and status badges).
+- **Frontend**: HTML5, Modern ES6+ Modular JavaScript, Standard CSS Design System (custom variables, responsive media queries, flexbox/grid layout, and zero external CSS runtime dependencies), Enterprise Design System inspired by the CampusX layout (clean elevated cards, sticky navigation header, Ctrl+K quick search, accessible modals, and status badges).
 - **Backend**: Node.js, Express.js REST API, Centralized Error Handling, JWT Bearer Authentication, Strict RBAC Middleware, Security Headers.
 - **Database**: **MongoDB (Campus Database)** with Mongoose schemas, indexes, and automated embedded local daemon fallback (`mongodb-memory-server`) for zero-configuration local development.
 - **Security**: Bcrypt password hashing, JWT authentication, OWASP security protections, immutable audit trail, input validation, and role-based route guards.
@@ -16,15 +16,16 @@ CaseConnect is an enterprise regulatory web platform designed for monitoring, tr
 ## 2. MongoDB Models & Schemas
 
 All schemas, relationships, indexes, and validation rules are located in `backend/models/`:
-1. **`Bureau.js`**: Regulatory bureaus, jurisdiction scopes, and statutory capacity limits.
-2. **`Institution.js`**: Technical institutions, statutory permanent IDs, intake, location, and risk scores.
-3. **`User.js`**: Official profiles, employee IDs, hashed credentials, and role assignments (`SUPER_ADMIN`, `BUREAU_OFFICER`, `REGIONAL_REVIEWER`, `INSTITUTION_USER`).
-4. **`Case.js`**: Comprehensive complaint dockets, SLA deadlines, petitioner data, timeline events, remarks, and documents.
-5. **`OverlapReview.js`**: 3-layer cross-bureau overlap detection records with confidence scores and human review determinations.
-6. **`CoordinationRequest.js`**: Inter-bureau joint coordination dockets and action notes.
-7. **`Notification.js`**: Automated SLA warnings, overdue alerts, and cross-bureau notifications.
-8. **`AuditLog.js`**: Immutable security audit ledger tracking all critical state changes.
-9. **`SystemConfig.js`**: Configurable SLA thresholds and workflow rules.
+1. **`Student.js`**: Dedicated student profile model, containing full name, email, institution/college, course, branch, academic year, student ID, phone number, and hashed credentials.
+2. **`Bureau.js`**: Regulatory bureaus, jurisdiction scopes, and statutory capacity limits.
+3. **`Institution.js`**: Technical institutions, statutory permanent IDs, intake, location, and risk scores.
+4. **`User.js`**: Official profiles, employee IDs, hashed credentials, and role assignments (`SUPER_ADMIN`, `BUREAU_OFFICER`, `REGIONAL_REVIEWER`, `INSTITUTION_USER`).
+5. **`Case.js`**: Comprehensive complaint dockets, SLA deadlines, petitioner data, timeline events, remarks, and documents.
+6. **`OverlapReview.js`**: 3-layer cross-bureau overlap detection records with confidence scores and human review determinations.
+7. **`CoordinationRequest.js`**: Inter-bureau joint coordination dockets and action notes.
+8. **`Notification.js`**: Automated SLA warnings, overdue alerts, and cross-bureau notifications.
+9. **`AuditLog.js`**: Immutable security audit ledger tracking all critical state changes.
+10. **`SystemConfig.js`**: Configurable SLA thresholds and workflow rules.
 
 ---
 
@@ -94,28 +95,53 @@ You can seed or reseed all demo accounts and benchmark records anytime by runnin
 npm run seed:demo
 ```
 
-The platform is pre-provisioned with authorized test accounts for every application role:
+The platform is pre-provisioned with authorized test accounts for all roles including students:
 
 | Role | Email | Password | Primary Accessible Scope |
 | :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin@caseconnect.gov.in` | `Admin@2026!` | Global governance, Users, Audit Logs, Workflow SLA settings, All Bureaus |
-| **PGRC Officer** | `pgrc.officer@caseconnect.gov.in` | `Officer@2026!` | Public Grievance Redressal Cell cases, assignments, reports |
+| **Verified Student** | `student@caseconnect.gov.in` | `Student@2026!` | Student Grievance Portal (`#/student-dashboard`), profile update, grievance filing |
+| **Super Admin** | `admin@caseconnect.gov.in` | `Admin@2026!` | Global governance, Users, Student Registrations, Audit Logs, Workflow SLA settings |
+| **PGRC Officer** | `pgrc.officer@caseconnect.gov.in` | `Officer@2026!` | Public Grievance Redressal Cell cases, assignments, student grievance scrutiny |
 | **RB Officer** | `rb.officer@caseconnect.gov.in` | `Officer@2026!` | Regulation Bureau cases, norms compliance, institutional scrutiny |
 | **Reviewer / Coordinator** | `reviewer@caseconnect.gov.in` | `Reviewer@2026!` | Cross-bureau overlap review adjudication, joint coordination requests |
 | **Institution User** | `institution@caseconnect.gov.in` | `Institution@2026!` | Authorized institution 360° profile, related matters, compliance responses |
 
 > [!TIP]
-> On the login page (`http://localhost:5000/#/login`), you can click any of the **Authorized Test Credentials** buttons to instantly autofill credentials and sign into the console.
+> On the login pages (`#/student-login` and `#/login`), you can click any of the **Demo Credentials** buttons to instantly autofill credentials and sign in.
 
 ---
 
-## 7. Verification & Automated Testing
+## 7. Student Registration & Authentication Portal
+
+Students have a dedicated portal integrated directly into CaseConnect:
+- **Student Sign-In**: `http://localhost:5000/#/student-login`
+- **Student Registration**: `http://localhost:5000/#/student-register`
+- **Protected Student Dashboard**: `http://localhost:5000/#/student-dashboard`
+
+### Information Collected:
+- Full Name
+- Verified Student Email Address
+- College / Technical Institution
+- Course & Degree Program (e.g., B.Tech, MCA, MBA)
+- Branch & Department (e.g., Computer Science, Mechanical)
+- Academic Year / Semester
+- Optional Roll / Enrollment ID and Mobile Number
+- Password & Confirmation (with minimum 8 characters and letter + number validation)
+
+All data is hashed and stored in the MongoDB `Student` collection. Duplicate accounts are prevented through server-side unique constraints.
+
+---
+
+## 8. Verification & Automated Testing
 
 Run the test suites to verify system integrity:
 ```bash
-# Critical scenarios & architectural integrity checks (16 tests)
-node tests/criticalScenarios.test.js
+# 1. Critical scenarios & architectural integrity checks (20 unit tests)
+npm test
 
-# Live server, end-to-end API, demo account authentication, and 405 checks (12 tests)
+# 2. Live server, end-to-end API, student registration, login, and RBAC checks (15 e2e tests)
 node tests/testLiveServer.js
+
+# 3. Production build asset verification
+npm run build
 ```

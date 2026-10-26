@@ -24,14 +24,18 @@ async function renderHeader() {
             ${window.Icons?.logoEmblem('w-5 h-5 text-indigo-600') || ''}
           </div>
           <div class="brand-title">Case<span>Connect</span></div>
-          <span class="brand-tag">Official Console</span>
+          <span class="brand-tag">AICTE Monitoring</span>
         </a>
 
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
           ${themeToggleBtn}
+          <a href="#/student-login" class="btn btn-secondary btn-sm" id="headerStudentPortalBtn">
+            ${window.Icons?.users('w-3.5 h-3.5 text-indigo-600') || '🎓'}
+            <span>Student Portal</span>
+          </a>
           <a href="#/login" class="btn btn-primary btn-sm">
             ${window.Icons?.lock('w-3.5 h-3.5') || ''}
-            <span>Official Portal Sign-In</span>
+            <span>Official Sign-In</span>
           </a>
         </div>
       </div>
@@ -43,22 +47,33 @@ async function renderHeader() {
     return;
   }
 
+  const isStudent = user?.role === 'STUDENT';
+  const brandTarget = isStudent ? '#/student-dashboard' : '#/dashboard';
+  const brandTag = isStudent ? 'Student Portal' : 'AICTE Regulatory Console';
+
   headerEl.innerHTML = `
     <div class="header-container">
-      <a href="#/dashboard" class="brand-wrapper">
+      <a href="${brandTarget}" class="brand-wrapper">
         <div class="brand-icon-box">
           ${window.Icons?.logoEmblem('w-5 h-5 text-indigo-600') || ''}
         </div>
         <div class="brand-title">Case<span>Connect</span></div>
-        <span class="brand-tag">Regulatory Console</span>
+        <span class="brand-tag">${brandTag}</span>
       </a>
 
-      <!-- Quick Search Trigger -->
-      <button class="search-trigger-btn" id="openSearchBtn" title="Global Quick Search (Ctrl+K)">
-        ${window.Icons?.search('w-3.5 h-3.5 text-slate-400') || ''}
-        <span>Search cases or institutions...</span>
-        <span class="search-shortcut">Ctrl K</span>
-      </button>
+      ${!isStudent ? `
+        <!-- Quick Search Trigger -->
+        <button class="search-trigger-btn" id="openSearchBtn" title="Global Quick Search (Ctrl+K)">
+          ${window.Icons?.search('w-3.5 h-3.5 text-slate-400') || ''}
+          <span>Search cases or institutions...</span>
+          <span class="search-shortcut">Ctrl K</span>
+        </button>
+      ` : `
+        <div style="font-size: 0.82rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.45rem;">
+          ${window.Icons?.shield('w-4 h-4 text-emerald-600') || '🛡️'}
+          <span style="font-weight: 600;">AICTE Student Grievance &amp; Redressal Desk</span>
+        </div>
+      `}
 
       <!-- Right Header Actions -->
       <div style="display: flex; align-items: center; gap: 0.85rem;">
@@ -71,25 +86,36 @@ async function renderHeader() {
         <!-- Theme Toggle -->
         ${themeToggleBtn}
 
-        <!-- Notification Bell -->
-        <a href="#/notifications" class="btn btn-secondary btn-sm" style="position: relative; padding: 0.35rem 0.55rem;" title="Notifications">
-          ${window.Icons?.bell('w-4 h-4 text-slate-600') || ''}
-          <span id="headerUnreadBadge" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 0.6rem; padding: 0.05rem 0.3rem; border-radius: 9999px; font-weight: 700;"></span>
-        </a>
+        ${!isStudent ? `
+          <!-- Notification Bell -->
+          <a href="#/notifications" class="btn btn-secondary btn-sm" style="position: relative; padding: 0.35rem 0.55rem;" title="Notifications">
+            ${window.Icons?.bell('w-4 h-4 text-slate-600') || ''}
+            <span id="headerUnreadBadge" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 0.6rem; padding: 0.05rem 0.3rem; border-radius: 9999px; font-weight: 700;"></span>
+          </a>
 
-        <!-- Bureau Indicator Pill -->
-        <span class="badge badge-indigo" style="font-weight: 700; font-size: 0.72rem;">
-          ${user?.bureauId ? `Bureau: ${user.bureauId}` : 'Council Cell'}
-        </span>
+          <!-- Bureau Indicator Pill -->
+          <span class="badge badge-indigo" style="font-weight: 700; font-size: 0.72rem;">
+            ${user?.bureauId ? `Bureau: ${user.bureauId}` : 'AICTE Cell'}
+          </span>
+        ` : `
+          <!-- Verified Student Pill -->
+          <span class="badge badge-green" style="font-weight: 700; font-size: 0.72rem;">
+            ✓ Active Student
+          </span>
+        `}
 
-        <!-- Official Profile Menu -->
+        <!-- User / Student Profile Menu -->
         <div style="display: flex; align-items: center; gap: 0.5rem; border-left: 1px solid var(--color-border); padding-left: 0.75rem;">
           <div style="width: 30px; height: 30px; border-radius: 9999px; background: var(--color-primary-light); color: var(--color-primary-dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem;">
-            ${(user?.fullName || 'O').charAt(0).toUpperCase()}
+            ${(user?.fullName || (isStudent ? 'S' : 'O')).charAt(0).toUpperCase()}
           </div>
-          <div style="display: flex; flex-direction: column; line-height: 1.15;">
-            <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-text);">${user?.fullName || 'Official'}</span>
-            <span style="font-size: 0.68rem; color: var(--color-text-muted);">${user?.role?.replace(/_/g, ' ') || 'Officer'}</span>
+          <div style="display: flex; flex-direction: column; line-height: 1.15; max-width: 140px;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${user?.fullName || (isStudent ? 'Student' : 'Official')}
+            </span>
+            <span style="font-size: 0.68rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${isStudent ? (user?.college || 'Student') : (user?.role?.replace(/_/g, ' ') || 'Officer')}
+            </span>
           </div>
           <button class="btn btn-secondary btn-sm" id="logoutBtn" style="padding: 0.3rem 0.45rem; margin-left: 0.2rem;" title="Sign Out">
             ${window.Icons?.logOut('w-3.5 h-3.5 text-slate-600') || ''}

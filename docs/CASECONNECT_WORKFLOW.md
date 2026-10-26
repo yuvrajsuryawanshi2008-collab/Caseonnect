@@ -42,7 +42,7 @@ In traditional systems, each bureau worked in isolation. If a college faced a fa
 
 CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by MongoDB.
 
-- **Client Tier (SPA):** HTML5, Vanilla ES6+ Modular Architecture, Tailwind CSS Utility Layer & Clean Elevated Card System, Client Hash Router (`#/dashboard`, `#/cases`, `#/institutions`), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).
+- **Client Tier (SPA):** HTML5, Vanilla ES6+ Modular Architecture, Standard CSS Design System & Clean Elevated Card System, Client Hash Router (`#/dashboard`, `#/cases`, `#/institutions`), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).
 - **Server Tier (Node.js & Express):** Express.js Application Server (Port 5000), CORS Preflight & Global Security Headers (`nosniff`, `SAMEORIGIN`, `XSS block`), JWT Authentication Middleware & Role-Based Access Control (RBAC), 405 Method Not Allowed Interceptor & Safe JSON Error Responder.
 - **Automated Engines:**
   - 3-Layer Overlap Detection Engine (Tokenization + Jaccard Similarity).

@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Student = require('../models/Student');
 const Bureau = require('../models/Bureau');
 const Institution = require('../models/Institution');
 const Case = require('../models/Case');
@@ -139,12 +140,29 @@ async function initializeCoreSystem() {
         isActive: true
       });
 
+      // Demo Student Account
+      const studentPasswordHash = await bcrypt.hash('Student@2026!', salt);
+      await Student.create({
+        fullName: 'Rohan Sharma',
+        email: 'student@caseconnect.gov.in',
+        passwordHash: studentPasswordHash,
+        college: 'Apex Institute of Technology & Engineering',
+        course: 'B.Tech',
+        branch: 'Computer Science and Engineering',
+        academicYear: '3rd Year (Semester 6)',
+        studentIdNumber: 'STU-2023-CS-042',
+        phoneNumber: '+91 98765 43210',
+        role: 'STUDENT',
+        isActive: true
+      });
+
       console.log('[System Init] Authorized initial accounts created:');
       console.log('  1. Super Admin:      admin@caseconnect.gov.in        / Admin@2026!');
       console.log('  2. PGRC Officer:     pgrc.officer@caseconnect.gov.in / Officer@2026!');
       console.log('  3. RB Officer:       rb.officer@caseconnect.gov.in   / Officer@2026!');
       console.log('  4. Coordinator/Rev:  reviewer@caseconnect.gov.in     / Reviewer@2026!');
       console.log('  5. Institution Rep:  institution@caseconnect.gov.in  / Institution@2026!');
+      console.log('  6. Student Demo:     student@caseconnect.gov.in      / Student@2026!');
     }
   } catch (err) {
     console.error('[System Init Error]', err.message);

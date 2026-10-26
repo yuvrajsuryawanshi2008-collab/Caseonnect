@@ -12,7 +12,7 @@
 +-----------------------------------------------------------------------------------+
 |                            CLIENT PRESENTATION TIER                               |
 |                                                                                   |
-|  [ Modern Web Client - HTML5 / Modern JS / Tailwind Utility & CampusX Theme ]     |
+|  [ Modern Web Client - HTML5 / Modern JS / Standard CSS & CampusX Theme ]        |
 |   ├── Central Dashboard (Executive KPIs, Real Charts, Activity Ticker)             |
 |   ├── All Cases Registry (Deep Filters, Sorting, Server Pagination)               |
 |   ├── Case Dossier & Timeline (Full Action History, Remarks, Transitions)         |

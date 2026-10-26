@@ -58,17 +58,19 @@ class ApiClient {
 
       if (response.status === 401) {
         // For login and registration attempts, surface the specific validation / credential message
-        if (endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register')) {
-          throw new Error(data.message || 'Invalid official credentials.');
+        if (endpoint.includes('/login') || endpoint.includes('/register')) {
+          throw new Error(data.message || 'Invalid credentials.');
         }
 
         // For protected routes, session has expired
+        const wasStudent = window.Auth?.isStudent();
         this.setToken(null);
         localStorage.removeItem('caseconnect_user');
-        if (window.location.hash !== '#/login') {
-          window.location.hash = '#/login';
+        const targetRoute = wasStudent ? '#/student-login' : '#/login';
+        if (window.location.hash !== targetRoute) {
+          window.location.hash = targetRoute;
         }
-        throw new Error(data.message || 'Official session expired. Please log in.');
+        throw new Error(data.message || 'Session expired. Please sign in again.');
       }
 
       if (!response.ok) {

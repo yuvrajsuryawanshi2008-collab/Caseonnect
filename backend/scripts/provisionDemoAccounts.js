@@ -10,6 +10,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const bcrypt = require('bcryptjs');
 const { connectDB } = require('../config/db');
 const User = require('../models/User');
+const Student = require('../models/Student');
 const Bureau = require('../models/Bureau');
 const { ROLES } = require('../config/constants');
 const { initializeCoreSystem, loadBenchmarkData } = require('../utils/seedData');
@@ -110,6 +111,28 @@ async function run() {
       }
     }
 
+    // Seed Demo Student Account
+    const studentPasswordHash = await bcrypt.hash('Student@2026!', salt);
+    const existingStudent = await Student.findOne({ email: 'student@caseconnect.gov.in' });
+    if (!existingStudent) {
+      await Student.create({
+        fullName: 'Rohan Sharma',
+        email: 'student@caseconnect.gov.in',
+        passwordHash: studentPasswordHash,
+        college: 'Apex Institute of Technology & Engineering',
+        course: 'B.Tech',
+        branch: 'Computer Science and Engineering',
+        academicYear: '3rd Year (Semester 6)',
+        studentIdNumber: 'STU-2023-CS-042',
+        phoneNumber: '+91 98765 43210',
+        role: 'STUDENT',
+        isActive: true
+      });
+      console.log('  - Created demo student account: student@caseconnect.gov.in (STUDENT)');
+    } else {
+      console.log('  - Synced demo student account: student@caseconnect.gov.in (STUDENT)');
+    }
+
     console.log('\n[3/3] Loading Benchmark Regulatory Records & Overlap Scan...');
     const benchmarkResult = await loadBenchmarkData();
     console.log(`[Result] ${benchmarkResult.message}`);
@@ -122,6 +145,7 @@ async function run() {
     console.log(' 3. RB Officer:       rb.officer@caseconnect.gov.in   / Officer@2026!');
     console.log(' 4. Coordinator/Rev:  reviewer@caseconnect.gov.in     / Reviewer@2026!');
     console.log(' 5. Institution Rep:  institution@caseconnect.gov.in  / Institution@2026!');
+    console.log(' 6. Student Demo:     student@caseconnect.gov.in      / Student@2026!');
     console.log('===============================================================\n');
     process.exit(0);
   } catch (err) {

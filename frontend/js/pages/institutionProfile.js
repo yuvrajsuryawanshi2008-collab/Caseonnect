@@ -133,7 +133,7 @@ async function renderInstitutionProfilePage(container, institutionId) {
         <!-- Cross-Bureau Breakdown -->
         <div class="card">
           <h3 class="card-title" style="margin-bottom: 0.35rem;">Cross-Bureau Case Jurisdiction Breakdown</h3>
-          <p class="card-desc" style="margin-bottom: 0.85rem;">All historical and active matters filed against this institution across Council bureaus.</p>
+          <p class="card-desc" style="margin-bottom: 0.85rem;">All historical and active matters filed against this institution across AICTE bureaus.</p>
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.65rem; margin-bottom: 0.85rem;">
             ${Object.entries(metrics.bureauBreakdown || {}).map(([bureau, count]) => `
@@ -148,7 +148,7 @@ async function renderInstitutionProfilePage(container, institutionId) {
           </div>
 
           <div style="border-top: 1px solid var(--color-border); padding-top: 0.65rem; font-size: 0.78rem; color: var(--color-text-muted); line-height: 1.45;">
-            <strong>Institutional Oversight Notice</strong>: This consolidated cross-bureau dossier prevents conflicting directives being dispatched to the institution from Regulation Bureau and PGRC.
+            <strong>Institutional Oversight Notice</strong>: This consolidated cross-bureau dossier prevents conflicting directives being dispatched to the institution from AICTE Regulation Bureau and PGRC.
           </div>
         </div>
       </div>

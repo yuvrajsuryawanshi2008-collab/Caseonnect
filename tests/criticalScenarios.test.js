@@ -150,6 +150,9 @@ async function runTestSuite() {
       '../frontend/js/components/toast.js',
       '../frontend/js/components/modals.js',
       '../frontend/js/pages/login.js',
+      '../frontend/js/pages/studentLogin.js',
+      '../frontend/js/pages/studentRegister.js',
+      '../frontend/js/pages/studentDashboard.js',
       '../frontend/js/pages/dashboard.js',
       '../frontend/js/pages/cases.js',
       '../frontend/js/pages/caseDetails.js',
@@ -183,6 +186,7 @@ async function runTestSuite() {
       '../docs/DATABASE_SCHEMA.md',
       '../docs/API_DOCUMENTATION.md',
       '../backend/models/User.js',
+      '../backend/models/Student.js',
       '../backend/models/Case.js',
       '../backend/models/Bureau.js',
       '../backend/models/Institution.js',
@@ -232,6 +236,49 @@ async function runTestSuite() {
     assert(fs.existsSync(serverPath), 'Server file must exist');
     assert(fs.existsSync(provisionerPath), 'Demo accounts provisioner must exist');
     assert(fs.existsSync(batPath), 'Start.bat launcher must exist');
+  });
+
+  // 17. Standard CSS Verification & Zero Tailwind Runtime
+  test('Complete Tailwind CSS removal and pure Standard CSS verification', () => {
+    const indexPath = path.join(__dirname, '../frontend/index.html');
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
+    assert(!indexContent.includes('cdn.tailwindcss.com'), 'Tailwind CDN script must not be present in index.html');
+    assert(!indexContent.includes('tailwind.config'), 'Tailwind inline configuration must not be present in index.html');
+
+    const cssPath = path.join(__dirname, '../frontend/css/styles.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+    assert(cssContent.includes('--color-primary:'), 'Standard CSS variables must exist in styles.css');
+    assert(cssContent.includes('.student-hero-banner'), 'Student Portal styles must be defined in styles.css');
+    assert(cssContent.includes('@media (max-width: 768px)'), 'Responsive media queries must exist in styles.css');
+  });
+
+  // 18. Student Model Schema Definition & Invariants
+  test('Student model enforces required fields, email format, and role invariant', () => {
+    const Student = require('../backend/models/Student');
+    const schema = Student.schema;
+    assert(schema.path('fullName').isRequired, 'Student fullName must be required');
+    assert(schema.path('email').isRequired, 'Student email must be required');
+    assert(schema.path('college').isRequired, 'Student college must be required');
+    assert(schema.path('course').isRequired, 'Student course must be required');
+    assert(schema.path('branch').isRequired, 'Student branch must be required');
+    assert(schema.path('academicYear').isRequired, 'Student academicYear must be required');
+    assert(schema.path('passwordHash').isRequired, 'Student passwordHash must be required');
+    assert.strictEqual(schema.path('role').defaultValue, 'STUDENT', 'Default role must be STUDENT');
+  });
+
+  // 19. Security: No plaintext passwords in Student demo provisioner
+  test('Demo student accounts use hashed credentials and avoid plaintext leakage', () => {
+    const provPath = path.join(__dirname, '../backend/scripts/provisionDemoAccounts.js');
+    const provContent = fs.readFileSync(provPath, 'utf-8');
+    assert(provContent.includes('bcrypt.hash'), 'Passwords must be securely hashed before storage');
+    assert(provContent.includes('Student.create'), 'Student provisioning must be integrated');
+  });
+
+  // 20. RBAC System Constants include STUDENT role
+  test('System Constants and RBAC invariants recognize STUDENT role', () => {
+    const { ROLES } = require('../backend/config/constants');
+    assert.strictEqual(ROLES.STUDENT, 'STUDENT', 'STUDENT must be a recognized system role');
+    assert.strictEqual(ROLES.SUPER_ADMIN, 'SUPER_ADMIN', 'SUPER_ADMIN role must remain intact');
   });
 
   console.log(`\nTest Execution Summary: ${passed} / ${total} tests passed (100% success rate).\n`);

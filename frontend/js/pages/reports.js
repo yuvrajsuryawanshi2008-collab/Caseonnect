@@ -10,7 +10,7 @@ async function renderReportsPage(container) {
           Reports & Regulatory Analytics
         </h1>
         <p style="font-size: 0.8rem; color: var(--color-text-muted);">
-          Institutional compliance reporting, bureau disposal ratios, and exportable regulatory ledgers.
+          AICTE institutional compliance reporting, bureau disposal ratios, and exportable regulatory ledgers.
         </p>
       </div>
 

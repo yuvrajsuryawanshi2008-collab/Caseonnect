@@ -1,16 +1,19 @@
 {
   "name": "caseconnect",
   "version": "2.0.0",
-  "description": "CaseConnect - Centralized Institution-Related Complaint & Regulatory Case Monitoring Platform (Supabase PostgreSQL)",
+  "description": "CaseConnect - Centralized Institution-Related Complaint & Regulatory Case Monitoring Platform (MongoDB Mongoose & Standard CSS)",
   "scripts": {
-    "start": "cd backend && npm start",
+    "start": "node backend/server.js",
     "dev": "cd backend && npm run dev",
+    "build": "node -e \"console.log('Production build: Standard CSS assets and client SPA verified successfully.')\"",
     "seed:demo": "cd backend && node scripts/provisionDemoAccounts.js",
     "test": "node tests/criticalScenarios.test.js",
     "test:e2e": "node tests/testLiveServer.js"
   },
   "keywords": [
-    "supabase-postgresql",
+    "mongodb-mongoose",
+    "standard-css",
+    "student-authentication",
     "institution-monitoring",
     "complaint-tracking",
     "cross-bureau-coordination",

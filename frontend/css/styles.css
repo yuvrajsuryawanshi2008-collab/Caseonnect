@@ -19,6 +19,14 @@
   --color-primary-light: #eef2ff;
   --color-primary-focus: rgba(79, 70, 229, 0.2);
 
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
   --color-bg: #f5f7fb;
   --color-surface: #ffffff;
   --color-surface-subtle: #f8fafc;
@@ -913,4 +921,411 @@ button, input, select, textarea {
   color: #cbd5e1 !important;
 }
 
+/* ==========================================================================
+   Standard CSS Replacement Utilities (Independent of External Frameworks)
+   ========================================================================== */
 
+/* Sizing Utilities */
+.w-3 { width: 0.75rem; }
+.w-3\.5, .w-3-5 { width: 0.875rem; }
+.w-4 { width: 1rem; }
+.w-5 { width: 1.25rem; }
+.w-6 { width: 1.5rem; }
+.w-7 { width: 1.75rem; }
+.w-8 { width: 2rem; }
+.w-12 { width: 3rem; }
+.w-full { width: 100%; }
+
+.h-3 { height: 0.75rem; }
+.h-3\.5, .h-3-5 { height: 0.875rem; }
+.h-4 { height: 1rem; }
+.h-5 { height: 1.25rem; }
+.h-6 { height: 1.5rem; }
+.h-7 { height: 1.75rem; }
+.h-8 { height: 2rem; }
+.h-12 { height: 3rem; }
+.h-full { height: 100%; }
+
+/* Margin / Alignment Utilities */
+.mx-auto { margin-left: auto; margin-right: auto; }
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* Text Color Utilities */
+.text-indigo-600 { color: #4f46e5; }
+.text-indigo-500 { color: #6366f1; }
+.text-slate-400 { color: #94a3b8; }
+.text-slate-500 { color: #64748b; }
+.text-slate-600 { color: #475569; }
+.text-slate-700 { color: #334155; }
+.text-amber-400 { color: #fbbf24; }
+.text-amber-600 { color: #d97706; }
+.text-emerald-500 { color: #10b981; }
+.text-emerald-600 { color: #059669; }
+.text-red-500 { color: #ef4444; }
+.text-red-600 { color: #dc2626; }
+.text-purple-600 { color: #9333ea; }
+.text-blue-600 { color: #2563eb; }
+
+/* Flexbox & Grid Utilities */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.flex-1 { flex: 1 1 0%; }
+.flex-wrap { flex-wrap: wrap; }
+
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+.grid { display: grid; }
+.grid-2-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.grid-3-col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+.grid-4-col {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Auth Page Layouts & Containers */
+.auth-page-wrapper {
+  min-height: calc(100vh - var(--header-height) - 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.auth-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 2.25rem;
+  border-top: 4px solid var(--color-primary);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  transition: all 0.2s ease;
+}
+
+.auth-tab-group {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--color-surface-subtle);
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-portal-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.75rem;
+}
+
+.auth-portal-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-portal-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.auth-portal-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+/* ==========================================================================
+   Student Portal & Dashboard Components
+   ========================================================================== */
+
+.student-hero-banner {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.student-hero-info h2 {
+  font-size: 1.55rem;
+  color: #ffffff;
+  margin-bottom: 0.35rem;
+  font-weight: 800;
+}
+
+.student-hero-info p {
+  color: #e0e7ff;
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+}
+
+.student-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.student-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.student-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.student-action-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.student-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-primary);
+}
+
+.student-action-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.student-action-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.student-action-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  margin-bottom: 1rem;
+}
+
+.student-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.82rem;
+}
+
+.student-info-row:last-child {
+  border-bottom: none;
+}
+
+.student-info-label {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.student-info-value {
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: right;
+}
+
+.rights-card {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 1px solid rgba(79, 70, 229, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints & Media Queries
+   ========================================================================== */
+
+/* Tablets and small laptops (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .grid-4-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-3-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile & Small Tablets (max-width: 768px) */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.75rem;
+  }
+  .main-content {
+    padding: 1rem;
+  }
+  .grid-4-col, .grid-3-col, .grid-2-col {
+    grid-template-columns: 1fr;
+  }
+  .auth-card {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+  .header-container {
+    padding: 0 0.85rem;
+  }
+  .search-trigger-btn {
+    display: none;
+  }
+  .student-hero-banner {
+    padding: 1.25rem;
+  }
+}
+
+/* Small mobile devices (max-width: 480px) */
+@media (max-width: 480px) {
+  .brand-title {
+    font-size: 1.05rem;
+  }
+  .brand-tag {
+    display: none;
+  }
+  .kpi-card {
+    padding: 0.85rem 1rem;
+  }
+  .kpi-val {
+    font-size: 1.35rem;
+  }
+  .auth-tab-btn {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.5rem;
+  }
+}
+
+/* Dark mode overrides for student portal components */
+[data-theme="dark"] .student-hero-banner {
+  background: linear-gradient(135deg, #3730a3 0%, #1e1b4b 100%);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .student-avatar {
+  background: #1e293b;
+  color: #818cf8;
+}
+
+[data-theme="dark"] .student-action-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .student-action-card:hover {
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .auth-portal-btn {
+  background: var(--color-surface-subtle);
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .auth-portal-btn.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: #a5b4fc;
+}
+
+[data-theme="dark"] .rights-card {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
+}

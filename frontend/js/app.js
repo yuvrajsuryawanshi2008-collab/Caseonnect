@@ -5,6 +5,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Register all routes
   window.Router.register('/login', window.renderLoginPage, false);
+  window.Router.register('/student-login', window.renderStudentLoginPage, false);
+  window.Router.register('/student-register', window.renderStudentRegisterPage, false);
+  window.Router.register('/student-dashboard', window.renderStudentDashboardPage, true);
   window.Router.register('/dashboard', window.renderDashboardPage, true);
   window.Router.register('/cases', window.renderCasesPage, true);
   window.Router.register('/institutions', window.renderInstitutionsPage, true);

@@ -15,6 +15,54 @@ function renderSidebar() {
   const user = window.Auth?.getUser();
   const currentHash = window.location.hash || '#/dashboard';
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'SENIOR_MONITORING_OFFICER';
+  const isStudent = user?.role === 'STUDENT';
+
+  if (isStudent) {
+    sidebarEl.innerHTML = `
+      <div style="margin-bottom: 0.75rem;">
+        <button class="btn btn-primary btn-full btn-sm" id="btnStudentLodgeGrievanceSidebar">
+          ${window.Icons?.plus('w-3.5 h-3.5') || ''}
+          <span>Lodge Grievance</span>
+        </button>
+      </div>
+
+      <div class="sidebar-heading">Student Workspace</div>
+      <a href="#/student-dashboard" class="sidebar-nav-item ${currentHash === '#/student-dashboard' ? 'active' : ''}">
+        ${window.Icons?.dashboard('w-4 h-4') || ''}
+        <span>Student Dashboard</span>
+      </a>
+      <a href="#/institutions" class="sidebar-nav-item ${currentHash.startsWith('#/institutions') ? 'active' : ''}">
+        ${window.Icons?.building('w-4 h-4') || ''}
+        <span>Search Institutions</span>
+      </a>
+
+      <div class="sidebar-heading">Redressal Guidelines</div>
+      <a href="#/workflow-config" class="sidebar-nav-item ${currentHash === '#/workflow-config' ? 'active' : ''}">
+        ${window.Icons?.sliders('w-4 h-4') || ''}
+        <span>Statutory SLA Limits</span>
+      </a>
+
+      <div style="margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--color-border);">
+        <button class="sidebar-nav-item" id="btnStudentSidebarLogout" style="width: 100%; border: none; background: transparent; text-align: left; cursor: pointer;">
+          ${window.Icons?.logOut('w-4 h-4 text-slate-500') || ''}
+          <span>Sign Out</span>
+        </button>
+      </div>
+    `;
+
+    document.getElementById('btnStudentLodgeGrievanceSidebar')?.addEventListener('click', () => {
+      if (window.Modals?.openRegisterCaseModal) {
+        window.Modals.openRegisterCaseModal();
+      } else {
+        window.location.hash = '#/cases';
+      }
+    });
+
+    document.getElementById('btnStudentSidebarLogout')?.addEventListener('click', () => {
+      window.Auth?.logout();
+    });
+    return;
+  }
 
   sidebarEl.innerHTML = `
     <div style="margin-bottom: 0.75rem;">
