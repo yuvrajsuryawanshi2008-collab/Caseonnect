@@ -1,0 +1,21 @@
+{
+  "name": "caseconnect",
+  "version": "2.0.0",
+  "description": "CaseConnect - Centralized Institution-Related Complaint & Regulatory Case Monitoring Platform (Supabase PostgreSQL)",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "seed:demo": "cd backend && node scripts/provisionDemoAccounts.js",
+    "test": "node tests/criticalScenarios.test.js",
+    "test:e2e": "node tests/testLiveServer.js"
+  },
+  "keywords": [
+    "supabase-postgresql",
+    "institution-monitoring",
+    "complaint-tracking",
+    "cross-bureau-coordination",
+    "regulatory-compliance"
+  ],
+  "author": "CaseConnect Architectural Engineering Team",
+  "license": "UNLICENSED"
+}

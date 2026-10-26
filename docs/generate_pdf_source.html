@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CaseConnect - Technical Workflow & Architecture Documentation</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.5pt;
+      line-height: 1.5;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2, h3, h4 {
+      color: #0f172a;
+      font-weight: bold;
+      margin-top: 1.2rem;
+      margin-bottom: 0.5rem;
+      page-break-after: avoid;
+    }
+
+    h1 {
+      font-size: 16pt;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 0.3rem;
+      color: #1e3a8a;
+    }
+
+    h2 {
+      font-size: 13pt;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 0.2rem;
+      color: #1e40af;
+    }
+
+    h3 {
+      font-size: 11pt;
+      color: #334155;
+    }
+
+    h4 {
+      font-size: 10pt;
+      color: #475569;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: #cbd5e1;
+      margin: 1.2rem 0;
+    }
+
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+      padding-left: 1.4rem;
+    }
+
+    li {
+      margin-bottom: 0.2rem;
+    }
+
+    .list-item-num {
+      margin-bottom: 0.35rem;
+      padding-left: 0.2rem;
+    }
+
+    code {
+      font-family: Consolas, Courier, monospace;
+      font-size: 8pt;
+      background: #f1f5f9;
+      color: #b91c1c;
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre.code-block {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: Consolas, Courier, monospace;
+      font-size: 7.5pt;
+      line-height: 1.35;
+      margin: 0.6rem 0;
+      page-break-inside: avoid;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    pre.code-block code {
+      background: transparent;
+      color: #f8fafc;
+      padding: 0;
+      border: none;
+      font-size: inherit;
+    }
+
+    .table-container {
+      width: 100%;
+      margin: 0.75rem 0;
+      page-break-inside: avoid;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin-bottom: 0.4rem;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #1e293b;
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 5px 6px;
+      border: 1px solid #334155;
+    }
+
+    td {
+      padding: 4px 6px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .header-banner {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 1.1rem 1.4rem;
+      border-radius: 6px;
+      margin-bottom: 1.2rem;
+    }
+
+    .header-banner h1 {
+      color: #ffffff !important;
+      border: none !important;
+      margin: 0 0 0.3rem 0 !important;
+      font-size: 18pt !important;
+    }
+
+    .header-banner p {
+      margin: 0;
+      color: #bfdbfe;
+      font-size: 9pt;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-banner">
+    <h1>CaseConnect Regulatory Platform</h1>
+    <p>Complete Technical Workflow, Architecture Blueprint & Operational Reference Manual</p>
+  </div>
+
+  <h1>CaseConnect: Technical Workflow &amp; Architecture Documentation</h1>
+<p><strong>Platform:</strong> CaseConnect — Centralized Institution Complaint &amp; Regulatory Monitoring Platform  </p>
+<p><strong>Target Solution:</strong> Statutory Regulatory Oversight &amp; Inter-Bureau Coordination (Regulation Bureau, PGRC, Approval Bureau, Policy Bureau, Chief Vigilance Cell)  </p>
+<p><strong>Database Architecture:</strong> MongoDB with Mongoose ODM (Zero-configuration local fallback via embedded engine)  </p>
+<p><strong>Project Path:</strong> <code>C:\Users\Yuvraj\OneDrive\Desktop\Case Connect</code>  </p>
+<p><strong>Generated Date:</strong> 2026-10-26  </p>
+<hr/>
+<h2>1. Executive Summary &amp; Beginner Walkthrough</h2>
+<h3>What is CaseConnect?</h3>
+<p>Technical colleges and universities are governed by regulatory bodies comprised of different cells:</p>
+<ul>
+<li><strong>Regulation Bureau (RB):</strong> Ensures colleges maintain statutory faculty-student ratios, required laboratory space, and council norms.</li>
+<li><strong>Public Grievance Redressal Cell (PGRC):</strong> Resolves complaints from students and parents regarding withheld certificates or capitation fees.</li>
+<li><strong>Approval Bureau (AB):</strong> Oversees annual extension of approvals and sanctions.</li>
+<li><strong>Policy and Academic Planning Bureau (PAPB):</strong> Handles autonomy and curricular benchmarks.</li>
+<li><strong>Chief Vigilance Cell (VIGILANCE):</strong> Investigates financial malpractices and whistleblower petitions.</li>
+</ul>
+<p>In traditional systems, each bureau worked in isolation. If a college faced a faculty salary complaint in PGRC and simultaneously applied for course expansions in AB, neither cell was aware of the other's docket.</p>
+<p><strong>CaseConnect</strong> unifies all complaints into a single regulatory console with automated cross-bureau overlap detection, SLA tracking, automated escalation, and 360° institutional compliance profiles.</p>
+<h3>The Beginner's End-to-End Walkthrough:</h3>
+<div class="list-item-num"><b>1.</b> <strong>Starting Up:</strong> The official double-clicks <code>start.bat</code> or runs <code>npm start</code>. The server boots up at <code>http://localhost:5000</code>.</div>
+<div class="list-item-num"><b>2.</b> <strong>Accessing the Portal:</strong> The browser navigates to <code>http://localhost:5000</code>. The client-side router notices no authentication token is present in <code>localStorage</code> and immediately redirects to <code>#/login</code>.</div>
+<div class="list-item-num"><b>3.</b> <strong>Signing In:</strong> The user clicks any of the "Authorized Test Credentials" buttons (e.g., <em>Super Admin</em> or <em>PGRC Officer</em>) or enters credentials manually. The client sends a <code>POST /api/auth/login</code> request.</div>
+<div class="list-item-num"><b>4.</b> <strong>Receiving Credentials:</strong> The backend validates credentials using Bcrypt, generates a signed JWT token containing the user's role and bureau, and returns it. The browser stores this token in <code>localStorage</code>.</div>
+<div class="list-item-num"><b>5.</b> <strong>Dashboard Overview:</strong> The user lands on <code>#/dashboard</code>. A consolidated overview of active cases, ageing brackets (0–7 days, 8–15 days, 16–30 days, &gt;30 days), bureau distribution, and alerts appears.</div>
+<div class="list-item-num"><b>6.</b> <strong>Registering a Case:</strong> An officer clicks <strong>"Register New Case"</strong>. They enter the institution's Permanent ID, title, description, and severity.</div>
+<div class="list-item-num"><b>7.</b> <strong>Automated Intelligence:</strong> When the case is saved, two automatic engines trigger:</div>
+<p>   - <strong>SLA Calculation:</strong> Computes deadline according to severity (e.g., Critical = 7 days, Low = 45 days).</p>
+<p>   - <strong>Overlap Engine:</strong> Scans other bureaus using Jaccard text similarity to identify matching allegations regarding the same college.</p>
+<div class="list-item-num"><b>8.</b> <strong>Inter-Bureau Coordination:</strong> If an overlap is flagged, reviewers can initiate a joint coordination docket or schedule joint hearings.</div>
+<div class="list-item-num"><b>9.</b> <strong>Resolution &amp; Sign-off:</strong> As the inquiry progresses, the officer updates the case timeline, uploads remarks, and moves the case through the validated state machine (<code>RECEIVED</code> → <code>ASSIGNED</code> → <code>UNDER_PROCESS</code> → <code>DISPOSED</code> → <code>CLOSED</code>).</div>
+<div class="list-item-num"><b>10.</b> <strong>Signing Out:</strong> Clicking <strong>"Logout"</strong> purges the token from memory and <code>localStorage</code>, redirecting safely back to <code>#/login</code>.</div>
+<hr/>
+<h2>2. System Architecture</h2>
+<p>CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by MongoDB.</p>
+<ul>
+<li><strong>Client Tier (SPA):</strong> HTML5, Vanilla ES6+ Modular Architecture, Tailwind CSS Utility Layer &amp; Clean Elevated Card System, Client Hash Router (<code>#/dashboard</code>, <code>#/cases</code>, <code>#/institutions</code>), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).</li>
+<li><strong>Server Tier (Node.js &amp; Express):</strong> Express.js Application Server (Port 5000), CORS Preflight &amp; Global Security Headers (<code>nosniff</code>, <code>SAMEORIGIN</code>, <code>XSS block</code>), JWT Authentication Middleware &amp; Role-Based Access Control (RBAC), 405 Method Not Allowed Interceptor &amp; Safe JSON Error Responder.</li>
+<li><strong>Automated Engines:</strong></li>
+<p>  - 3-Layer Overlap Detection Engine (Tokenization + Jaccard Similarity).</p>
+<p>  - SLA Ageing &amp; Escalation Engine (Periodic 30-min background interval).</p>
+<p>  - Immutable Audit Trail Ledger Service.</p>
+<li><strong>Database Tier (MongoDB):</strong> Primary Target: MongoDB Campus Database via <code>MONGODB_URI</code>. Self-Healing Development Fallback: Embedded In-Memory MongoDB Daemon (<code>mongodb-memory-server</code>).</li>
+</ul>
+<hr/>
+<h2>3. Application Workflow (User Journey)</h2>
+<h3>Stage 1: Initial Page Load</h3>
+<div class="list-item-num"><b>1.</b> User loads <code>http://localhost:5000/</code>.</div>
+<div class="list-item-num"><b>2.</b> Browser downloads <code>frontend/index.html</code>, stylesheet <code>frontend/css/styles.css</code>, and core script modules.</div>
+<div class="list-item-num"><b>3.</b> <code>frontend/js/app.js</code> runs on <code>DOMContentLoaded</code>. It registers all hash routes and calls <code>Router.init('mainContentArea')</code>.</div>
+<div class="list-item-num"><b>4.</b> <code>Router.handleRoute()</code> evaluates <code>window.location.hash</code>. If no session token is stored, user is redirected to <code>#/login</code>.</div>
+<h3>Stage 2: Authentication</h3>
+<div class="list-item-num"><b>1.</b> User inputs email and password on <code>#/login</code>.</div>
+<div class="list-item-num"><b>2.</b> <code>renderLoginPage()</code> intercepts form submission, calls <code>Auth.login(email, password)</code>.</div>
+<div class="list-item-num"><b>3.</b> <code>api.js</code> executes <code>POST /api/auth/login</code>.</div>
+<div class="list-item-num"><b>4.</b> On HTTP 200, JWT token and sanitized user profile are stored in <code>localStorage</code> keys <code>caseconnect_token</code> and <code>caseconnect_user</code>.</div>
+<div class="list-item-num"><b>5.</b> Router directs user to <code>#/dashboard</code>.</div>
+<h3>Stage 3: Dashboard &amp; Case Management</h3>
+<div class="list-item-num"><b>1.</b> User views real-time metrics loaded via <code>GET /api/reports/dashboard-stats</code>.</div>
+<div class="list-item-num"><b>2.</b> Active cases can be filtered by bureau, status, severity, or search query.</div>
+<div class="list-item-num"><b>3.</b> Officers can register cases (<code>POST /api/cases</code>), reassign officers (<code>PUT /api/cases/:id/assign</code>), or advance workflow state (<code>PUT /api/cases/:id/status</code>).</div>
+<h3>Stage 4: Cross-Bureau Overlap Adjudication</h3>
+<div class="list-item-num"><b>1.</b> Reviewers navigate to <code>#/overlaps</code>.</div>
+<div class="list-item-num"><b>2.</b> The system surfaces flagged overlaps showing confidence scores, matched tokens, and case summaries.</div>
+<div class="list-item-num"><b>3.</b> The reviewer selects one of three determinations:</div>
+<p>   - <code>CONFIRMED_RELATED</code>: Cross-links case IDs in both records.</p>
+<p>   - <code>COORDINATION_INITIATED</code>: Creates an inter-bureau coordination docket.</p>
+<p>   - <code>DISMISSED_UNRELATED</code>: Marks the match dismissed with explanatory notes.</p>
+<h3>Stage 5: Sign-out</h3>
+<div class="list-item-num"><b>1.</b> Clicking the user profile avatar dropdown triggers <code>Auth.logout()</code>.</div>
+<div class="list-item-num"><b>2.</b> Token and user profile are purged from <code>localStorage</code>.</div>
+<div class="list-item-num"><b>3.</b> Application navigates to <code>#/login</code>.</div>
+<hr/>
+<h2>4. Role-Based Access Control &amp; Workflows</h2>
+<div class="table-container"><table>
+<thead><tr>
+<th>Role Identifier</th>
+<th>Role Display Name</th>
+<th>Primary Scope</th>
+<th>Permitted Actions</th>
+</tr></thead><tbody>
+<tr>
+<td><code>SUPER_ADMIN</code></td>
+<td>Principal Monitoring Administrator</td>
+<td>Global Council Governance</td>
+<td>Full system read/write, user management, audit trail inspection, SLA parameter customization, benchmark seeding.</td>
+</tr>
+<tr>
+<td><code>SENIOR_MONITORING_OFFICER</code></td>
+<td>Senior Monitoring Director</td>
+<td>Regulatory Supervision</td>
+<td>Cross-bureau oversight, institution updates, audit log viewing, case re-assignment.</td>
+</tr>
+<tr>
+<td><code>BUREAU_OFFICER</code></td>
+<td>Bureau Scrutiny Officer</td>
+<td>Bureau Operations (e.g., PGRC, RB)</td>
+<td>Case registration, investigation timeline updates, status transitions, coordination initiation.</td>
+</tr>
+<tr>
+<td><code>REGIONAL_REVIEWER</code></td>
+<td>Regional Reviewer / Coordinator</td>
+<td>Multi-Bureau Coordination</td>
+<td>Overlap determination adjudication, cross-bureau ticket processing, institution dossier review.</td>
+</tr>
+<tr>
+<td><code>INSTITUTION_USER</code></td>
+<td>Institutional Representative</td>
+<td>Institution Portal</td>
+<td>Read-only view of 360° compliance dossier, submission of compliance remarks.</td>
+</tr>
+<tr>
+<td><code>AUDITOR</code></td>
+<td>Regulatory Compliance Auditor</td>
+<td>Compliance Inspection</td>
+<td>Read-only access to cases, reports, and immutable audit logs.</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h2>5. Login, Authentication &amp; Session Security</h2>
+<h3>Login Execution Steps</h3>
+<div class="list-item-num"><b>1.</b> <strong>Client Submission:</strong> Form input is captured in <code>frontend/js/pages/login.js</code>. Form fields are validated (non-empty string, valid format).</div>
+<div class="list-item-num"><b>2.</b> <strong>API Request:</strong> Dispatched via <code>POST /api/auth/login</code> with payload <code>{"email": "...", "password": "..."}</code>.</div>
+<div class="list-item-num"><b>3.</b> <strong>User Lookup:</strong> Backend executes <code>User.findOne({ email: email.toLowerCase().trim() })</code>.</div>
+<div class="list-item-num"><b>4.</b> <strong>Password Verification:</strong> Bcrypt hashes the plaintext password against stored hash using <code>bcrypt.compare(password, user.passwordHash)</code>.</div>
+<div class="list-item-num"><b>5.</b> <strong>Token Generation:</strong> Upon match, <code>jsonwebtoken.sign()</code> produces a signed JWT with standard claims: <code>id</code>, <code>email</code>, <code>role</code>, <code>bureauId</code>.</div>
+<div class="list-item-num"><b>6.</b> <strong>Sanitized Response:</strong> Returns <code>{ success: true, token, user }</code> ensuring <code>passwordHash</code> is excluded.</div>
+<div class="list-item-num"><b>7.</b> <strong>Session Injection:</strong> Client sets <code>Authorization: Bearer &lt;token&gt;</code> on all future API requests via <code>ApiClient.request()</code>.</div>
+<hr/>
+<h2>6. Complete API Endpoints Reference</h2>
+<h3>Authentication Routes (<code>/api/auth</code>)</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/auth/login</code></td>
+<td>Official login</td>
+<td><code>{ email, password }</code></td>
+<td>Public</td>
+<td><code>login.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/auth/register</code></td>
+<td>Official account creation</td>
+<td><code>{ employeeId, fullName, email, password, bureauId, designation, phoneNumber }</code></td>
+<td>Public</td>
+<td><code>login.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/auth/me</code></td>
+<td>Verify active session</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>auth.js</code></td>
+</tr>
+</tbody></table></div>
+<h3>Complaint Cases Routes (<code>/api/cases</code>)</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/cases</code></td>
+<td>List filtered cases</td>
+<td>Query params (<code>status</code>, <code>bureauCode</code>, <code>severity</code>, etc.)</td>
+<td>Bearer JWT</td>
+<td><code>cases.js</code>, <code>dashboard.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/cases/export</code></td>
+<td>Download cases CSV</td>
+<td>Query params</td>
+<td>Bearer JWT</td>
+<td><code>cases.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/cases/:id</code></td>
+<td>Case details</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/cases</code></td>
+<td>Register new case</td>
+<td><code>{ permanentId, institutionName, bureauCode, category, title, description, severity, priority, petitioner }</code></td>
+<td>Bearer JWT</td>
+<td><code>modals.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/cases/:id/status</code></td>
+<td>Advance status</td>
+<td><code>{ status, remarks }</code></td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/cases/:id/assign</code></td>
+<td>Assign officer</td>
+<td><code>{ officerId, officerName }</code></td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/cases/:id/remarks</code></td>
+<td>Add timeline note</td>
+<td><code>{ note }</code></td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/cases/:id/escalate</code></td>
+<td>Manual escalation</td>
+<td><code>{ reason }</code></td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+</tbody></table></div>
+<h3>Institutions Routes (<code>/api/institutions</code>)</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/institutions</code></td>
+<td>Search institutions</td>
+<td>Query params (<code>query</code>, <code>region</code>, <code>institutionType</code>)</td>
+<td>Bearer JWT</td>
+<td><code>institutions.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/institutions/:id</code></td>
+<td>Single institution</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>institutions.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/institutions/:id/profile-360</code></td>
+<td>360° Consolidated Dossier</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>institutionProfile.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/institutions</code></td>
+<td>Register institution</td>
+<td><code>{ permanentId, name, region, state, city, ... }</code></td>
+<td>Super Admin / SMO</td>
+<td><code>modals.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/institutions/:id</code></td>
+<td>Update institution</td>
+<td>Partial metadata object</td>
+<td>Super Admin / SMO</td>
+<td><code>institutionProfile.js</code></td>
+</tr>
+</tbody></table></div>
+<h3>Bureaus &amp; Coordination Routes (<code>/api/bureaus</code>)</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/bureaus</code></td>
+<td>Bureau workload &amp; capacity</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>bureaus.js</code>, <code>workload.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/bureaus/coordination</code></td>
+<td>Coordination dockets</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>bureaus.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/bureaus/coordination</code></td>
+<td>Initiate coordination ticket</td>
+<td><code>{ requestingBureauCode, targetBureauCode, primaryCaseId, subject, justification }</code></td>
+<td>Bearer JWT</td>
+<td><code>modals.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/bureaus/coordination/:id/action</code></td>
+<td>Update coordination docket</td>
+<td><code>{ status, note }</code></td>
+<td>Bearer JWT</td>
+<td><code>bureaus.js</code></td>
+</tr>
+</tbody></table></div>
+<h3>Overlap Engine Routes (<code>/api/overlaps</code>)</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/overlaps</code></td>
+<td>List overlap reviews</td>
+<td>Query params (<code>status</code>, <code>bureauCode</code>)</td>
+<td>Bearer JWT</td>
+<td><code>overlaps.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/overlaps/check/:caseId</code></td>
+<td>On-demand overlap scan</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>caseDetails.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/overlaps/:id/review</code></td>
+<td>Record review decision</td>
+<td><code>{ determination, reviewerNotes }</code></td>
+<td>Authorized Reviewer</td>
+<td><code>overlaps.js</code></td>
+</tr>
+</tbody></table></div>
+<h3>Notifications &amp; System Routes</h3>
+<div class="table-container"><table>
+<thead><tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Purpose</th>
+<th>Request Body</th>
+<th>Auth Required</th>
+<th>Frontend Caller</th>
+</tr></thead><tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/notifications</code></td>
+<td>Unread alerts</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>header.js</code>, <code>notifications.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/notifications/:id/read</code></td>
+<td>Mark read</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>notifications.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/notifications/read-all</code></td>
+<td>Mark all read</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>notifications.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/reports/dashboard-stats</code></td>
+<td>Aggregated analytics</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>dashboard.js</code>, <code>reports.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/reports/export/cases-csv</code></td>
+<td>System-wide export</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>reports.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/users</code></td>
+<td>List officials</td>
+<td>None</td>
+<td>Super Admin / SMO</td>
+<td><code>users.js</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/users</code></td>
+<td>Create official</td>
+<td><code>{ employeeId, fullName, email, password, role, ... }</code></td>
+<td>Super Admin</td>
+<td><code>users.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/users/:id/toggle-status</code></td>
+<td>Toggle account status</td>
+<td>None</td>
+<td>Super Admin</td>
+<td><code>users.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/audit</code></td>
+<td>Audit ledger</td>
+<td>Query params (<code>action</code>, <code>entityType</code>, <code>limit</code>)</td>
+<td>Super Admin / Auditor</td>
+<td><code>auditLogs.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/config/workflow</code></td>
+<td>SLA configurations</td>
+<td>None</td>
+<td>Bearer JWT</td>
+<td><code>workflowConfig.js</code></td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/config/workflow</code></td>
+<td>Update SLA rules</td>
+<td><code>{ slaDays }</code></td>
+<td>Super Admin</td>
+<td><code>workflowConfig.js</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/health</code></td>
+<td>Service health status</td>
+<td>None</td>
+<td>Public</td>
+<td>Health monitor</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/admin/bootstrap-benchmark</code></td>
+<td>Seed benchmark data</td>
+<td>None</td>
+<td>Super Admin</td>
+<td>Setup console</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h2>7. Database Architecture &amp; Data Models</h2>
+<h3>Database Provider</h3>
+<ul>
+<li><strong>Engine:</strong> MongoDB (Document Database)</li>
+<li><strong>Object Data Modeling (ODM):</strong> Mongoose</li>
+<li><strong>URI Configuration:</strong> Configured in <code>backend/.env</code> via <code>MONGODB_URI</code>.</li>
+<li><strong>Local Fallback:</strong> If local MongoDB daemon is not running on port 27017, <code>backend/config/db.js</code> initializes an in-memory embedded MongoDB daemon (<code>mongodb-memory-server</code>), ensuring instant local development without external dependencies.</li>
+</ul>
+<h3>Document Schemas &amp; Collections</h3>
+<div class="list-item-num"><b>1.</b> <strong><code>User</code> (<code>backend/models/User.js</code>):</strong> Fields: <code>employeeId</code>, <code>fullName</code>, <code>email</code>, <code>passwordHash</code>, <code>role</code>, <code>bureauId</code>, <code>designation</code>, <code>phoneNumber</code>, <code>isActive</code>, <code>lastLogin</code>.</div>
+<div class="list-item-num"><b>2.</b> <strong><code>Bureau</code> (<code>backend/models/Bureau.js</code>):</strong> Fields: <code>code</code>, <code>name</code>, <code>description</code>, <code>headOfficerName</code>, <code>contactEmail</code>, <code>jurisdictionScope</code>, <code>capacityLimit</code>, <code>isActive</code>.</div>
+<div class="list-item-num"><b>3.</b> <strong><code>Institution</code> (<code>backend/models/Institution.js</code>):</strong> Fields: <code>permanentId</code>, <code>name</code>, <code>institutionType</code>, <code>region</code>, <code>state</code>, <code>city</code>, <code>address</code>, <code>pincode</code>, <code>affiliatedUniversity</code>, <code>approvedIntake</code>, <code>contactEmail</code>, <code>contactPhone</code>, <code>principalName</code>, <code>isActive</code>, <code>riskScore</code>.</div>
+<div class="list-item-num"><b>4.</b> <strong><code>Case</code> (<code>backend/models/Case.js</code>):</strong> Fields: <code>caseNumber</code>, <code>institutionId</code>, <code>permanentId</code>, <code>institutionName</code>, <code>bureauCode</code>, <code>category</code>, <code>title</code>, <code>description</code>, <code>severity</code>, <code>priority</code>, <code>status</code>, <code>assignedOfficerId</code>, <code>assignedOfficerName</code>, <code>receivedDate</code>, <code>slaDeadline</code>, <code>isEscalated</code>, <code>petitioner</code>, <code>timeline</code>, <code>remarks</code>, <code>documents</code>, <code>relatedCaseIds</code>.</div>
+<div class="list-item-num"><b>5.</b> <strong><code>OverlapReview</code> (<code>backend/models/OverlapReview.js</code>):</strong> Fields: <code>caseAId</code>, <code>caseANumber</code>, <code>caseATitle</code>, <code>caseABureau</code>, <code>caseBId</code>, <code>caseBNumber</code>, <code>caseBTitle</code>, <code>caseBBureau</code>, <code>institutionId</code>, <code>permanentId</code>, <code>institutionName</code>, <code>confidenceScore</code>, <code>layerMatches</code>, <code>matchingTokens</code>, <code>status</code>, <code>reviewedBy</code>, <code>reviewerName</code>, <code>reviewerRole</code>, <code>reviewerNotes</code>, <code>reviewedAt</code>.</div>
+<div class="list-item-num"><b>6.</b> <strong><code>CoordinationRequest</code> (<code>backend/models/CoordinationRequest.js</code>):</strong> Fields: <code>requestingBureauCode</code>, <code>targetBureauCode</code>, <code>primaryCaseId</code>, <code>primaryCaseNumber</code>, <code>associatedCaseIds</code>, <code>institutionName</code>, <code>subject</code>, <code>justification</code>, <code>status</code>, <code>jointActionNotes</code>, <code>initiatedById</code>, <code>initiatedByName</code>.</div>
+<div class="list-item-num"><b>7.</b> <strong><code>Notification</code> (<code>backend/models/Notification.js</code>):</strong> Fields: <code>recipientUserId</code>, <code>bureauCode</code>, <code>title</code>, <code>message</code>, <code>type</code>, <code>caseId</code>, <code>linkUrl</code>, <code>isRead</code>.</div>
+<div class="list-item-num"><b>8.</b> <strong><code>AuditLog</code> (<code>backend/models/AuditLog.js</code>):</strong> Fields: <code>userId</code>, <code>userName</code>, <code>userEmail</code>, <code>userRole</code>, <code>action</code>, <code>entityType</code>, <code>entityId</code>, <code>details</code>, <code>beforeState</code>, <code>afterState</code>, <code>ipAddress</code>, <code>timestamp</code>.</div>
+<div class="list-item-num"><b>9.</b> <strong><code>SystemConfig</code> (<code>backend/models/SystemConfig.js</code>):</strong> Fields: <code>key</code>, <code>value</code>, <code>description</code>.</div>
+<hr/>
+<h2>8. Core Regulatory Feature Workflows</h2>
+<h3>1. Automated Overlap Detection Engine (<code>overlapEngine.js</code>)</h3>
+<p>When a case is registered or checked on-demand:</p>
+<ul>
+<li><strong>Layer 1 (Institution Match):</strong> Filters for existing open cases matching the identical <code>permanentId</code> or <code>institutionId</code>.</li>
+<li><strong>Layer 2 (Cross-Bureau Partition):</strong> Restricts candidates to cases lodged under <strong>different</strong> bureaus (<code>bureauCode !== targetCase.bureauCode</code>).</li>
+<li><strong>Layer 3 (Lexical Text Similarity):</strong></li>
+<p>  - Tokenizes title and description into word stems.</p>
+<p>  - Removes common English stopwords (<code>the</code>, <code>is</code>, <code>complaint</code>, <code>college</code>, etc.).</p>
+<p>  - Calculates the Jaccard similarity index:  </p>
+<p>    <code>J(A, B) = |A ∩ B| / |A ∪ B|</code></p>
+<p>  - If <code>J(A, B) &gt;= 0.25</code>, an <code>OverlapReview</code> docket is generated with confidence score between 50% and 95%.</p>
+<p>  - Notifications are dispatched to both involved bureaus.</p>
+</ul>
+<h3>2. SLA Ageing &amp; Escalation Engine (<code>escalationEngine.js</code>)</h3>
+<ul>
+<li>Every case is assigned an automatic SLA deadline at creation based on its severity:</li>
+<p>  - <code>CRITICAL</code>: 7 statutory days</p>
+<p>  - <code>HIGH</code>: 15 statutory days</p>
+<p>  - <code>MEDIUM</code>: 30 statutory days</p>
+<p>  - <code>LOW</code>: 45 statutory days</p>
+<li>Every 30 minutes, <code>scanAndProcessDeadlines()</code> executes:</li>
+<p>  - Scans all non-disposed cases.</p>
+<p>  - Flags overdue cases where <code>currentTime &gt; slaDeadline</code>.</p>
+<p>  - Automatically transitions state to <code>ESCALATED</code> if overdue criteria are met.</p>
+<p>  - Dispatches high-priority notifications to bureau supervisors.</p>
+</ul>
+<h3>3. Institution 360° Consolidated Dossier (<code>/api/institutions/:id/profile-360</code>)</h3>
+<p>Aggregates all multi-bureau history for an institution:</p>
+<ul>
+<li>Computes weighted institutional Risk Score:  </li>
+<p>  <code>Risk Score = min(100, (Open Cases <em> 12) + (Critical Cases </em> 25) + (Overdue Cases * 20))</code></p>
+<li>Categorizes risk levels:</li>
+<p>  - <code>&gt;= 70</code>: <code>CRITICAL / WATCHLIST</code></p>
+<p>  - <code>40 - 69</code>: <code>ELEVATED INQUIRY</code></p>
+<p>  - <code>1 - 39</code>: <code>ROUTINE SCRUTINY</code></p>
+<p>  - <code>0</code>: <code>COMPLIANT / LOW</code></p>
+<li>Returns full bureau breakdown, category distribution, and complete chronological case list.</li>
+</ul>
+<hr/>
+<h2>9. Error Handling, HTTP 405 Resolution &amp; Security</h2>
+<h3>Root Cause &amp; Permanent Resolution of API Error 405 (Method Not Allowed)</h3>
+<ul>
+<li><strong>The Issue:</strong> When developers launched the frontend using VS Code Live Server (port 5500), <code>POST /api/auth/login</code> was sent to <code>http://127.0.0.1:5500/api/auth/login</code>. Static file web servers return <code>HTTP 405 Method Not Allowed</code> when receiving HTTP <code>POST</code> or <code>PUT</code> methods.</li>
+<li><strong>The Permanent Fix:</strong></li>
+<p>  1. <code>frontend/js/config.js</code> dynamically detects if the client is running on a port other than 5000 (e.g. 5500 or file preview) and routes all API traffic directly to <code>http://localhost:5000/api</code>.</p>
+<p>  2. Full CORS preflight handler <code>app.options('*', cors(corsOptions))</code> added to Express.</p>
+<p>  3. Express <code>/api/*</code> fallback safely catches unsupported methods and returns explicit JSON 405 error responses.</p>
+<p>  4. Client <code>ApiClient.request()</code> checks status 405 and raises informative user guidance instead of crashing.</p>
+</ul>
+<h3>Security Controls</h3>
+<ul>
+<li><strong>Password Protection:</strong> PBKDF2 / Bcrypt hashing with 10 salt rounds.</li>
+<li><strong>JWT Protection:</strong> Signed with server-side secret; expired tokens reject with HTTP 401.</li>
+<li><strong>No Sensitive Leakage:</strong> <code>passwordHash</code> stripped on all user queries via <code>.select('-passwordHash')</code>.</li>
+<li><strong>Security Headers:</strong></li>
+<p>  - <code>X-Content-Type-Options: nosniff</code></p>
+<p>  - <code>X-Frame-Options: SAMEORIGIN</code></p>
+<p>  - <code>X-XSS-Protection: 1; mode=block</code></p>
+<p>  - <code>Referrer-Policy: strict-origin-when-cross-origin</code></p>
+<li><strong>Audit Logging:</strong> Every critical change (logins, case creation, status changes, escalations, coordination requests) is recorded in the <code>audit_logs</code> collection.</li>
+</ul>
+<hr/>
+<h2>10. Deployment &amp; Environment Configuration</h2>
+<h3>Running Locally</h3>
+<pre class="code-block bash"><code>
+# Double-click launcher on Windows:
+
+start.bat
+
+
+
+# Or execute via command line:
+
+cd "C:\Users\Yuvraj\OneDrive\Desktop\Case Connect"
+
+npm run seed:demo
+
+npm start
+
+</code></pre>
+<h3>Environment Variables (<code>backend/.env</code>)</h3>
+<pre class="code-block env"><code>
+PORT=5000
+
+NODE_ENV=development
+
+FRONTEND_URL=*
+
+MONGODB_URI=mongodb://127.0.0.1:27017/caseconnect
+
+JWT_SECRET=caseconnect_production_jwt_secret_key_2026_regulatory
+
+SESSION_EXPIRY=12h
+
+</code></pre>
+<hr/>
+<h2>11. Authorized Demo Accounts</h2>
+<div class="table-container"><table>
+<thead><tr>
+<th>Role</th>
+<th>Email</th>
+<th>Password</th>
+<th>Primary Scope</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Super Admin</strong></td>
+<td><code>admin@caseconnect.gov.in</code></td>
+<td><code>Admin@2026!</code></td>
+<td>Global governance, users, audit logs, SLA rules</td>
+</tr>
+<tr>
+<td><strong>PGRC Officer</strong></td>
+<td><code>pgrc.officer@caseconnect.gov.in</code></td>
+<td><code>Officer@2026!</code></td>
+<td>Public Grievance Redressal Cell cases</td>
+</tr>
+<tr>
+<td><strong>RB Officer</strong></td>
+<td><code>rb.officer@caseconnect.gov.in</code></td>
+<td><code>Officer@2026!</code></td>
+<td>Regulation Bureau compliance cases</td>
+</tr>
+<tr>
+<td><strong>Reviewer / Coordinator</strong></td>
+<td><code>reviewer@caseconnect.gov.in</code></td>
+<td><code>Reviewer@2026!</code></td>
+<td>Cross-bureau overlap adjudication</td>
+</tr>
+<tr>
+<td><strong>Institution Representative</strong></td>
+<td><code>institution@caseconnect.gov.in</code></td>
+<td><code>Institution@2026!</code></td>
+<td>Institutional 360° profile &amp; responses</td>
+</tr>
+</tbody></table></div>
+<hr/>
+<h2>12. Verification &amp; Test Evidence</h2>
+<h3>1. Critical Scenarios Test Suite (<code>tests/criticalScenarios.test.js</code>)</h3>
+<ul>
+<li><strong>16 / 16 Tests Passed (100% Success Rate)</strong></li>
+<li>Validates tokenization, Jaccard lexical similarity, state transition machine, SLA overdue detection, statutory ID validation, all 9 Mongoose models, and zero Supabase remnants.</li>
+</ul>
+<h3>2. Live Server End-to-End Test Suite (<code>tests/testLiveServer.js</code>)</h3>
+<ul>
+<li><strong>12 / 12 Tests Passed (100% Success Rate)</strong></li>
+<li>Validates <code>/api/health</code>, static frontend delivery, Super Admin login, invalid credential rejection, registration, duplicate checks, session restoration, private route protection, benchmark data seeding, cross-bureau overlap detection, all 5 demo account logins, and HTTP 405 error formatting.</li>
+</ul>
+</body>
+</html>
