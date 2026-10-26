@@ -6,7 +6,7 @@ const User = require('../models/User');
 const Student = require('../models/Student');
 const { authenticateToken, JWT_SECRET } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/rbac');
-const { ROLES } = require('../config/constants');
+const { ROLES, USER_TYPE_TO_ROLE } = require('../config/constants');
 const { logAuditEvent } = require('../services/auditService');
 
 // POST /api/auth/login
@@ -534,6 +534,200 @@ router.get('/admin/students', authenticateToken, authorizeRoles(
   } catch (err) {
     next(err);
   }
+});
+
+// =========================================================================
+// GENERIC USER PORTAL ENDPOINTS (Faculty / Stakeholder / Institution Rep)
+// Backward-compatible aliases — same controller logic, userType→role mapping
+// =========================================================================
+
+// POST /api/auth/user/register
+router.post('/user/register', async (req, res, next) => {
+  try {
+    const {
+      fullName, email, college, course, branch, academicYear,
+      studentIdNumber, phoneNumber, password, confirmPassword, userType
+    } = req.body;
+
+    // Validate userType
+    const allowedUserTypes = ['Faculty', 'Stakeholder', 'Institution Representative'];
+    if (!userType || !allowedUserTypes.includes(userType)) {
+      return res.status(400).json({
+        success: false,
+        message: `User Type must be one of: ${allowedUserTypes.join(', ')}.`
+      });
+    }
+
+    if (!fullName || !email || !college || !course || !branch || !academicYear || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Full Name, Email, College, Course, Branch, Academic Year, and Password are all required.'
+      });
+    }
+
+    if (fullName.trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'Full Name must be at least 2 characters.' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Password and confirmation do not match.' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    }
+
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasLetter || !hasNumber) {
+      return res.status(400).json({ success: false, message: 'Password must contain letters and at least one number.' });
+    }
+
+    const existingStudent = await Student.findOne({ email: normalizedEmail });
+    if (existingStudent) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists in the system.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Map userType → role
+    const mappedRole = USER_TYPE_TO_ROLE[userType] || 'ROLE_INSTITUTION_REP';
+
+    const newUser = await Student.create({
+      fullName: fullName.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      college: college.trim(),
+      course: course.trim(),
+      branch: branch.trim(),
+      academicYear: academicYear.trim(),
+      studentIdNumber: studentIdNumber ? studentIdNumber.trim() : '',
+      phoneNumber: phoneNumber ? phoneNumber.trim() : '',
+      role: mappedRole,
+      userType: userType,
+      isActive: true,
+      lastLogin: new Date()
+    });
+
+    const token = jwt.sign(
+      { id: newUser._id, role: mappedRole, email: newUser.email, fullName: newUser.fullName },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    try {
+      await logAuditEvent({
+        user: { fullName: newUser.fullName, role: mappedRole },
+        action: 'USER_REGISTERED',
+        entityType: 'Student',
+        entityId: String(newUser._id),
+        ipAddress: req.ip,
+        details: `User (${userType}) ${newUser.fullName} registered under institution ${newUser.college}.`
+      });
+    } catch (auditErr) {
+      console.warn('[Audit Warning] Could not record user registration:', auditErr.message);
+    }
+
+    const safeUser = newUser.toObject ? newUser.toObject() : { ...newUser };
+    delete safeUser.passwordHash;
+
+    res.status(201).json({
+      success: true,
+      message: `${userType} registration completed successfully.`,
+      token,
+      user: safeUser,
+      student: safeUser
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    }
+    next(err);
+  }
+});
+
+// POST /api/auth/user/login
+router.post('/user/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required.' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await Student.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'This account has been deactivated. Please contact support.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    await Student.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email, fullName: user.fullName },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    try {
+      await logAuditEvent({
+        user: { fullName: user.fullName, role: user.role },
+        action: 'USER_LOGIN',
+        entityType: 'Student',
+        entityId: String(user._id),
+        ipAddress: req.ip,
+        details: `User (${user.userType || user.role}) ${user.fullName} logged into User Portal.`
+      });
+    } catch (auditErr) {
+      console.warn('[Audit Warning] Could not record user login:', auditErr.message);
+    }
+
+    const safeUser = user.toObject ? user.toObject() : { ...user };
+    delete safeUser.passwordHash;
+
+    res.json({
+      success: true,
+      message: 'User authentication verified.',
+      token,
+      user: safeUser,
+      student: safeUser
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Also keep old student/* routes as backward-compatible aliases
+// POST /api/auth/student/register → proxies to same logic
+router.post('/student/register', (req, res, next) => {
+  // Default userType to Institution Representative for backward compat
+  if (!req.body.userType) req.body.userType = 'Institution Representative';
+  if (!req.body.confirmPassword) req.body.confirmPassword = req.body.password;
+  // Re-route internally
+  req.url = '/user/register';
+  router.handle(req, res, next);
 });
 
 module.exports = router;

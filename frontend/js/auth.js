@@ -60,14 +60,41 @@ class AuthManager {
   }
 
   async studentLogin(email, password) {
-    const res = await window.API.post('/auth/student/login', { email, password });
+    // Try new /user/login first, fall back to /student/login for backward compat
+    try {
+      return await this.userLogin(email, password);
+    } catch (e) {
+      const res = await window.API.post('/auth/student/login', { email, password });
+      if (res.success && res.token) {
+        window.API.setToken(res.token);
+        this.currentUser = res.student || res.user;
+        localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+        return this.currentUser;
+      }
+      throw new Error(res.message || 'Student login failed');
+    }
+  }
+
+  async userLogin(email, password) {
+    const res = await window.API.post('/auth/user/login', { email, password });
     if (res.success && res.token) {
       window.API.setToken(res.token);
-      this.currentUser = res.student || res.user;
+      this.currentUser = res.user || res.student;
       localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
       return this.currentUser;
     }
-    throw new Error(res.message || 'Student login failed');
+    throw new Error(res.message || 'Login failed');
+  }
+
+  async userRegister(registrationData) {
+    const res = await window.API.post('/auth/user/register', registrationData);
+    if (res.success && res.token) {
+      window.API.setToken(res.token);
+      this.currentUser = res.user || res.student;
+      localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
+      return this.currentUser;
+    }
+    throw new Error(res.message || 'Registration failed');
   }
 
   async studentRegister(registrationData) {

@@ -57,8 +57,13 @@ const studentSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['STUDENT'],
+    enum: ['STUDENT', 'ROLE_FACULTY', 'ROLE_STAKEHOLDER', 'ROLE_INSTITUTION_REP'],
     default: 'STUDENT'
+  },
+  userType: {
+    type: String,
+    enum: ['Institution Representative', 'Faculty', 'Stakeholder', ''],
+    default: ''
   },
   isActive: {
     type: Boolean,

@@ -1,6 +1,7 @@
 /**
- * CaseConnect Student Portal — Dedicated Login Component
- * Built with standard maintainable CSS, responsive layout, and clean form validation.
+ * CaseConnect User Portal — Generic Login Component
+ * Supports Faculty, Stakeholder, and Institution Representative roles.
+ * Built with standard maintainable CSS and clean form validation.
  */
 
 function renderStudentLoginPage(container) {
@@ -14,18 +15,18 @@ function renderStudentLoginPage(container) {
             ${window.Icons?.logoEmblem?.('w-7 h-7 text-indigo-600') || ''}
           </div>
           <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--color-text); margin-bottom: 0.25rem;">
-            Student Grievance Portal
+            User Login Portal
           </h2>
           <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.45;">
-            AICTE Institution Grievance Redressal & Complaint Monitoring
+            AICTE Institution Grievance Redressal &amp; Complaint Monitoring
           </p>
         </div>
 
         <!-- Portal Role Selector Pill -->
         <div class="auth-portal-selector">
           <button type="button" class="auth-portal-btn active" id="btnActiveStudentPortal">
-            ${window.Icons?.users?.('w-4 h-4') || '🎓'}
-            <span>Student Portal</span>
+            ${window.Icons?.users?.('w-4 h-4') || '👤'}
+            <span>User Portal</span>
           </button>
           <a href="#/login" class="auth-portal-btn" style="text-decoration: none;">
             ${window.Icons?.shield?.('w-4 h-4') || '🏛️'}
@@ -36,25 +37,25 @@ function renderStudentLoginPage(container) {
         <!-- Navigation Tabs: Sign-In vs Register -->
         <div class="auth-tab-group">
           <button type="button" class="auth-tab-btn active" id="tabStudentSignIn">
-            Student Sign-In
+            User Sign-In
           </button>
           <a href="#/student-register" class="auth-tab-btn" style="text-align: center; text-decoration: none;">
-            Register Student
+            Register User
           </a>
         </div>
 
         <!-- Inline Error Banner -->
         <div id="studentLoginAlertBox" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: 1.25rem; line-height: 1.45;"></div>
 
-        <!-- Student Sign In Form -->
+        <!-- User Sign In Form -->
         <form id="studentLoginForm">
           <div class="form-group" style="margin-bottom: 1.15rem;">
-            <label class="form-label" for="studentLoginEmail">Registered Student Email</label>
+            <label class="form-label" for="studentLoginEmail">Registered Email Address</label>
             <input 
               type="email" 
               class="form-control" 
               id="studentLoginEmail" 
-              placeholder="student@caseconnect.gov.in" 
+              placeholder="user@institution.edu.in" 
               required 
               autocomplete="email"
               style="padding: 0.65rem 0.85rem; font-size: 0.88rem;"
@@ -84,24 +85,24 @@ function renderStudentLoginPage(container) {
               <input type="checkbox" id="studentRememberSession" checked style="accent-color: var(--color-primary);" /> 
               Remember session
             </label>
-            <a href="javascript:void(0)" onclick="alert('Student Support: For password recovery, contact your college grievance cell or CaseConnect support desk.')" style="font-size: 0.8rem; font-weight: 600; color: var(--color-primary);">
+            <a href="javascript:void(0)" onclick="alert('User Support: For password recovery, contact your institution grievance cell or CaseConnect support desk.')" style="font-size: 0.8rem; font-weight: 600; color: var(--color-primary);">
               Need help?
             </a>
           </div>
 
           <button type="submit" class="btn btn-primary btn-full" id="studentLoginSubmitBtn" style="padding: 0.75rem 1rem; font-size: 0.92rem; font-weight: 700;">
-            <span>Sign In to Student Dashboard</span>
+            <span>Sign In to User Dashboard</span>
             ${window.Icons?.arrowRight?.('w-4 h-4') || '→'}
           </button>
         </form>
 
-        <!-- Demo Student Account Quick Autofill -->
+        <!-- Demo User Account Quick Autofill -->
         <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border);">
           <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 0.65rem; text-align: center;">
-            Demo Student Account (Click to Autofill)
+            Demo Accounts (Click to Autofill)
           </div>
-          <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem; border-radius: var(--radius-md);" onclick="populateStudentCredentials('student@caseconnect.gov.in', 'Student@2026!')">
-            <span class="badge badge-indigo" style="font-size: 0.68rem;">Verified Student</span>
+          <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.4rem;" onclick="populateStudentCredentials('student@caseconnect.gov.in', 'Student@2026!')">
+            <span class="badge badge-indigo" style="font-size: 0.68rem;">Institution Rep</span>
             <span style="font-size: 0.78rem; margin-left: 0.5rem; font-weight: 600;">student@caseconnect.gov.in</span>
           </button>
         </div>
@@ -147,7 +148,7 @@ function renderStudentLoginPage(container) {
     }
   });
 
-  // Handle student login submit
+  // Handle user login submit — tries /user/login first, falls back to /student/login
   document.getElementById('studentLoginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
@@ -157,17 +158,17 @@ function renderStudentLoginPage(container) {
 
     const btn = document.getElementById('studentLoginSubmitBtn');
     btn.disabled = true;
-    btn.innerHTML = `<span>Verifying student account...</span>`;
+    btn.innerHTML = `<span>Verifying account...</span>`;
 
     try {
-      await window.Auth?.studentLogin(email, password);
-      window.Toast?.success('Welcome to Student Grievance Portal.');
+      await window.Auth?.userLogin(email, password);
+      window.Toast?.success('Welcome to User Portal.');
       window.location.hash = '#/student-dashboard';
     } catch (err) {
       showAlert(err.message || 'Authentication failed. Please check your credentials.');
       window.Toast?.error(err.message || 'Authentication failed.');
       btn.disabled = false;
-      btn.innerHTML = `<span>Sign In to Student Dashboard</span> ${window.Icons?.arrowRight?.('w-4 h-4') || '→'}`;
+      btn.innerHTML = `<span>Sign In to User Dashboard</span> ${window.Icons?.arrowRight?.('w-4 h-4') || '→'}`;
     }
   });
 }

@@ -14,7 +14,7 @@ function renderStudentRegisterPage(container) {
             ${window.Icons?.logoEmblem?.('w-7 h-7 text-indigo-600') || ''}
           </div>
           <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--color-text); margin-bottom: 0.25rem;">
-            Student Registration
+            User Registration
           </h2>
           <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.45;">
             Register to lodge grievances, track complaints, and monitor AICTE institutional regulatory compliance.
@@ -24,19 +24,30 @@ function renderStudentRegisterPage(container) {
         <!-- Navigation Tabs: Sign-In vs Register -->
         <div class="auth-tab-group">
           <a href="#/student-login" class="auth-tab-btn" style="text-align: center; text-decoration: none;">
-            Student Sign-In
+            User Sign-In
           </a>
           <button type="button" class="auth-tab-btn active" id="tabStudentRegister">
-            Register Student
+            Register User
           </button>
         </div>
 
         <!-- Inline Alert Banner -->
         <div id="studentRegAlertBox" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: 1.25rem; line-height: 1.45;"></div>
 
-        <!-- Student Registration Form -->
+        <!-- User Registration Form -->
         <form id="studentRegisterForm">
           
+          <!-- User Type Dropdown (new) -->
+          <div class="form-group" style="margin-bottom: 0.95rem;">
+            <label class="form-label" for="regUserType">User Type *</label>
+            <select id="regUserType" class="form-control" required style="background: var(--color-surface);">
+              <option value="">Select User Type</option>
+              <option value="Faculty">Faculty Member</option>
+              <option value="Stakeholder">Stakeholder (Dept. Head / Industry Partner)</option>
+              <option value="Institution Representative">Institution Representative (Student)</option>
+            </select>
+          </div>
+
           <div class="form-group" style="margin-bottom: 0.95rem;">
             <label class="form-label" for="regStudentFullName">Full Name *</label>
             <input 
@@ -50,7 +61,7 @@ function renderStudentRegisterPage(container) {
           </div>
 
           <div class="form-group" style="margin-bottom: 0.95rem;">
-            <label class="form-label" for="regStudentEmail">Student Email Address *</label>
+            <label class="form-label" for="regStudentEmail">Email Address *</label>
             <input 
               type="email" 
               class="form-control" 
@@ -198,11 +209,12 @@ function renderStudentRegisterPage(container) {
     if (alertBox) alertBox.style.display = 'none';
   }
 
-  // Handle student registration submit
+  // Handle user registration submit
   document.getElementById('studentRegisterForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
 
+    const userType = document.getElementById('regUserType').value;
     const fullName = document.getElementById('regStudentFullName').value.trim();
     const email = document.getElementById('regStudentEmail').value.trim();
     const college = document.getElementById('regStudentCollege').value.trim();
@@ -213,6 +225,16 @@ function renderStudentRegisterPage(container) {
     const phoneNumber = document.getElementById('regStudentPhone').value.trim();
     const password = document.getElementById('regStudentPassword').value;
     const confirmPassword = document.getElementById('regStudentConfirmPassword').value;
+
+    // Validate userType first
+    const allowedUserTypes = ['Faculty', 'Stakeholder', 'Institution Representative'];
+    if (!userType || !allowedUserTypes.includes(userType)) {
+      showAlert('Please select a valid User Type (Faculty, Stakeholder, or Institution Representative).');
+      // Restore dropdown selection after validation error
+      const sel = document.getElementById('regUserType');
+      if (sel) sel.value = userType;
+      return;
+    }
 
     // Frontend validation
     if (fullName.length < 2) {
@@ -239,10 +261,11 @@ function renderStudentRegisterPage(container) {
 
     const btn = document.getElementById('studentRegSubmitBtn');
     btn.disabled = true;
-    btn.innerHTML = `<span>Registering student account...</span>`;
+    btn.innerHTML = `<span>Registering ${userType} account...</span>`;
 
     try {
-      await window.Auth?.studentRegister({
+      await window.Auth?.userRegister({
+        userType,
         fullName,
         email,
         college,
@@ -255,8 +278,8 @@ function renderStudentRegisterPage(container) {
         confirmPassword
       });
 
-      showAlert('Registration successful! Redirecting to student dashboard...', true);
-      window.Toast?.success('Student account registered. Welcome to CaseConnect!');
+      showAlert(`${userType} registration successful! Redirecting to dashboard...`, true);
+      window.Toast?.success(`${userType} account registered. Welcome to CaseConnect!`);
       setTimeout(() => {
         window.location.hash = '#/student-dashboard';
       }, 700);

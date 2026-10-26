@@ -30,8 +30,8 @@ async function renderHeader() {
         <div style="display: flex; align-items: center; gap: 0.65rem;">
           ${themeToggleBtn}
           <a href="#/student-login" class="btn btn-secondary btn-sm" id="headerStudentPortalBtn">
-            ${window.Icons?.users('w-3.5 h-3.5 text-indigo-600') || '🎓'}
-            <span>Student Portal</span>
+            ${window.Icons?.users('w-3.5 h-3.5 text-indigo-600') || '👤'}
+            <span>User Portal</span>
           </a>
           <a href="#/login" class="btn btn-primary btn-sm">
             ${window.Icons?.lock('w-3.5 h-3.5') || ''}
@@ -47,9 +47,14 @@ async function renderHeader() {
     return;
   }
 
-  const isStudent = user?.role === 'STUDENT';
+  const GENERIC_USER_ROLES = ['STUDENT', 'ROLE_FACULTY', 'ROLE_STAKEHOLDER', 'ROLE_INSTITUTION_REP'];
+  const isStudent = GENERIC_USER_ROLES.includes(user?.role);
   const brandTarget = isStudent ? '#/student-dashboard' : '#/dashboard';
-  const brandTag = isStudent ? 'Student Portal' : 'AICTE Regulatory Console';
+  const brandTag = isStudent
+    ? (user?.role === 'ROLE_FACULTY' ? 'Faculty Portal'
+      : user?.role === 'ROLE_STAKEHOLDER' ? 'Stakeholder Portal'
+      : 'AICTE Student Grievance Desk')
+    : 'AICTE Regulatory Console';
 
   headerEl.innerHTML = `
     <div class="header-container">
