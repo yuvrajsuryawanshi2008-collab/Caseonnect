@@ -56,8 +56,7 @@ function renderLoginPage(container) {
                 type="email" 
                 class="form-control" 
                 id="loginEmail" 
-                placeholder="admin@caseconnect.gov.in" 
-                value="admin@caseconnect.gov.in"
+                placeholder="name@example.com"
                 required 
                 autocomplete="username"
                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 0.88rem; transition: border-color 0.15s ease;"
@@ -75,8 +74,7 @@ function renderLoginPage(container) {
                 type="password" 
                 class="form-control" 
                 id="loginPassword" 
-                placeholder="••••••••••••" 
-                value="Admin@2026!"
+                placeholder="••••••••••••"
                 required 
                 autocomplete="current-password"
                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 0.88rem; transition: border-color 0.15s ease;"
@@ -98,35 +96,15 @@ function renderLoginPage(container) {
             </button>
           </form>
 
-          <!-- Authorized Test Accounts Quick Filler Strip -->
-          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border);">
-            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 0.65rem; text-align: center;">
-              Authorized Test Credentials (Click to Autofill)
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.45rem;">
-              <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; text-align: left; padding: 0.45rem 0.75rem; border-radius: var(--radius-md);" onclick="populateCredentials('admin@caseconnect.gov.in', 'Admin@2026!')">
-                <span class="badge badge-purple" style="font-size: 0.65rem;">Super Admin</span>
-                <span style="font-size: 0.75rem; margin-left: 0.45rem; font-weight: 600; color: #334155;">admin@caseconnect.gov.in</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; text-align: left; padding: 0.45rem 0.75rem; border-radius: var(--radius-md);" onclick="populateCredentials('pgrc.officer@caseconnect.gov.in', 'Officer@2026!')">
-                <span class="badge badge-indigo" style="font-size: 0.65rem;">PGRC Officer</span>
-                <span style="font-size: 0.75rem; margin-left: 0.45rem; font-weight: 600; color: #334155;">pgrc.officer@caseconnect.gov.in</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; text-align: left; padding: 0.45rem 0.75rem; border-radius: var(--radius-md);" onclick="populateCredentials('rb.officer@caseconnect.gov.in', 'Officer@2026!')">
-                <span class="badge badge-indigo" style="font-size: 0.65rem;">RB Officer</span>
-                <span style="font-size: 0.75rem; margin-left: 0.45rem; font-weight: 600; color: #334155;">rb.officer@caseconnect.gov.in</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; text-align: left; padding: 0.45rem 0.75rem; border-radius: var(--radius-md);" onclick="populateCredentials('reviewer@caseconnect.gov.in', 'Reviewer@2026!')">
-                <span class="badge badge-blue" style="font-size: 0.65rem;">Reviewer / Coord</span>
-                <span style="font-size: 0.75rem; margin-left: 0.45rem; font-weight: 600; color: #334155;">reviewer@caseconnect.gov.in</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" style="justify-content: flex-start; text-align: left; padding: 0.45rem 0.75rem; border-radius: var(--radius-md);" onclick="populateCredentials('institution@caseconnect.gov.in', 'Institution@2026!')">
-                <span class="badge badge-green" style="font-size: 0.65rem;">Institution Rep</span>
-                <span style="font-size: 0.75rem; margin-left: 0.45rem; font-weight: 600; color: #334155;">institution@caseconnect.gov.in</span>
-              </button>
-            </div>
+          <div id="officialLoginReference" style="margin-top: 1rem; padding: 0.75rem 0.9rem; border: 1px solid #fcd34d; border-radius: var(--radius-md); background: #fffbeb; font-size: 0.78rem; color: #78350f;">
+            <strong style="display: block; color: #78350f; margin-bottom: 0.25rem;">SIH prototype sample — Official Console</strong>
+            <span>Email: <code>pgrc.officer@caseconnect.gov.in</code></span><br />
+            <span>Password: <code>Officer@2026!</code></span>
+            <button type="button" id="useDemoOfficialAccount" style="display: block; margin-top: 0.45rem; padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer;">Fill sample login</button>
+            <span style="display: block; margin-top: 0.35rem;">Shared public demo account. Use only with synthetic prototype data.</span>
           </div>
-        </div>
+
+                  </div>
 
         <!-- REGISTRATION FORM -->
         <div id="registerContainer" style="display: none;">
@@ -248,6 +226,14 @@ function renderLoginPage(container) {
   const registerContainer = document.getElementById('registerContainer');
   const alertBox = document.getElementById('authAlertBox');
 
+  document.getElementById('useDemoOfficialAccount')?.addEventListener('click', () => {
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+    if (emailInput) emailInput.value = 'pgrc.officer@caseconnect.gov.in';
+    if (passwordInput) passwordInput.value = 'Officer@2026!';
+    document.getElementById('loginPassword')?.focus();
+  });
+
   function showAlert(msg, isSuccess = false) {
     if (!alertBox) return;
     alertBox.style.display = 'block';
@@ -358,7 +344,7 @@ function renderLoginPage(container) {
     btn.innerHTML = `<span>Registering account...</span>`;
 
     try {
-      await window.Auth?.register({
+      const registration = await window.Auth?.register({
         fullName,
         employeeId,
         email,
@@ -368,11 +354,10 @@ function renderLoginPage(container) {
         password
       });
 
-      showAlert('Official account successfully registered. Redirecting...', true);
-      window.Toast?.success('Registration successful. Session established.');
-      setTimeout(() => {
-        window.location.hash = '#/dashboard';
-      }, 700);
+      showAlert(registration?.message || 'Registration submitted for Super Admin approval.', true);
+      window.Toast?.success(registration?.message || 'Registration submitted for approval.');
+      btn.disabled = false;
+      btn.innerHTML = `<span>Complete Registration & Access Console</span> ${window.Icons?.arrowRight('w-4 h-4') || '→'}`;
     } catch (err) {
       showAlert(err.message || 'Failed to complete registration.');
       window.Toast?.error(err.message || 'Registration failed.');
@@ -382,12 +367,4 @@ function renderLoginPage(container) {
   });
 }
 
-function populateCredentials(email, pwd) {
-  const emailInput = document.getElementById('loginEmail');
-  const pwdInput = document.getElementById('loginPassword');
-  if (emailInput) emailInput.value = email;
-  if (pwdInput) pwdInput.value = pwd;
-}
-
 window.renderLoginPage = renderLoginPage;
-window.populateCredentials = populateCredentials;

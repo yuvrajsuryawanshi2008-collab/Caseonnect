@@ -5,11 +5,18 @@ const Institution = require('../models/Institution');
 const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/rbac');
-const { ROLES, CASE_STATUSES, DEFAULT_SLA_DAYS } = require('../config/constants');
+const { ROLES, GENERIC_USER_ROLES, CASE_STATUSES, ALLOWED_STATUS_TRANSITIONS, DEFAULT_SLA_DAYS } = require('../config/constants');
 const { transitionCaseStatus } = require('../services/workflowEngine');
 const { scanForOverlaps } = require('../services/overlapEngine');
 const { calculateAgeing } = require('../services/escalationEngine');
 const { logAuditEvent } = require('../services/auditService');
+
+const OFFICIAL_CASE_ROLES = [
+  ROLES.SUPER_ADMIN,
+  ROLES.SENIOR_MONITORING_OFFICER,
+  ROLES.BUREAU_OFFICER,
+  ROLES.REGIONAL_REVIEWER
+];
 
 // GET /api/cases - Paginated, filterable case list
 router.get('/', authenticateToken, async (req, res, next) => {
@@ -33,6 +40,14 @@ router.get('/', authenticateToken, async (req, res, next) => {
     if (category) filter.category = category;
     if (institutionId) filter.institutionId = institutionId;
 
+    if (GENERIC_USER_ROLES.includes(req.user.role)) {
+      if (!req.user.email) return res.status(403).json({ success: false, message: 'Portal account has no complaint ownership identity.' });
+      filter.petitionerContact = req.user.email;
+      filter.isConfidential = false;
+    } else if (req.user.role === ROLES.INSTITUTION_USER) {
+      filter.institutionId = req.user.institutionId || '00000000-0000-0000-0000-000000000000';
+    }
+
     let cases = await Case.find(filter).lean();
 
     // Text search query across caseNumber, title, institutionName, petitionerName
@@ -50,8 +65,12 @@ router.get('/', authenticateToken, async (req, res, next) => {
     // Append computed ageing & overdue status
     cases = cases.map(c => {
       const ageing = calculateAgeing(c);
+      const visibleCase = { ...c };
+      if (GENERIC_USER_ROLES.includes(req.user.role) || req.user.role === ROLES.INSTITUTION_USER) {
+        delete visibleCase.internalRemarks;
+      }
       return {
-        ...c,
+        ...visibleCase,
         ageDays: ageing.ageDays,
         ageBracket: ageing.bracket,
         isOverdue: ageing.isOverdue,
@@ -93,18 +112,40 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Case not found.' });
     }
 
+    if (GENERIC_USER_ROLES.includes(req.user.role) && (targetCase.petitionerContact !== req.user.email || targetCase.isConfidential)) {
+      return res.status(404).json({ success: false, message: 'Case not found.' });
+    }
+    if (req.user.role === ROLES.INSTITUTION_USER && String(targetCase.institutionId) !== String(req.user.institutionId)) {
+      return res.status(404).json({ success: false, message: 'Case not found.' });
+    }
+
     const ageing = calculateAgeing(targetCase);
     const institution = await Institution.findById(targetCase.institutionId).lean();
 
     let relatedCases = [];
     if (targetCase.relatedCaseIds && targetCase.relatedCaseIds.length) {
-      relatedCases = await Case.find({ _id: { $in: targetCase.relatedCaseIds } }).lean();
+      const relatedFilter = { _id: { $in: targetCase.relatedCaseIds } };
+      if (GENERIC_USER_ROLES.includes(req.user.role)) {
+        relatedFilter.petitionerContact = req.user.email;
+        relatedFilter.isConfidential = false;
+      } else if (req.user.role === ROLES.INSTITUTION_USER) {
+        relatedFilter.institutionId = req.user.institutionId;
+      }
+      relatedCases = await Case.find(relatedFilter).lean();
+      if (GENERIC_USER_ROLES.includes(req.user.role) || req.user.role === ROLES.INSTITUTION_USER) {
+        relatedCases.forEach(relatedCase => delete relatedCase.internalRemarks);
+      }
+    }
+
+    const visibleCase = { ...targetCase };
+    if (GENERIC_USER_ROLES.includes(req.user.role) || req.user.role === ROLES.INSTITUTION_USER) {
+      delete visibleCase.internalRemarks;
     }
 
     res.json({
       success: true,
       case: {
-        ...targetCase,
+        ...visibleCase,
         ageDays: ageing.ageDays,
         ageBracket: ageing.bracket,
         isOverdue: ageing.isOverdue,
@@ -209,7 +250,7 @@ router.post('/', authenticateToken, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.SENI
 });
 
 // POST /api/cases/:id/status - Authorized status transition
-router.post('/:id/status', authenticateToken, async (req, res, next) => {
+router.post('/:id/status', authenticateToken, authorizeRoles(...OFFICIAL_CASE_ROLES), async (req, res, next) => {
   try {
     const { targetStatus, remarks } = req.body;
     if (!targetStatus) {
@@ -284,7 +325,7 @@ router.post('/:id/assign', authenticateToken, authorizeRoles(ROLES.SUPER_ADMIN, 
 });
 
 // POST /api/cases/:id/remarks - Append internal remark
-router.post('/:id/remarks', authenticateToken, async (req, res, next) => {
+router.post('/:id/remarks', authenticateToken, authorizeRoles(...OFFICIAL_CASE_ROLES), async (req, res, next) => {
   try {
     const { comment, isConfidential = false } = req.body;
     if (!comment || !comment.trim()) {
@@ -321,6 +362,10 @@ router.post('/:id/disposal', authenticateToken, authorizeRoles(ROLES.SUPER_ADMIN
     const targetCase = await Case.findById(req.params.id);
     if (!targetCase) {
       return res.status(404).json({ success: false, message: 'Case not found.' });
+    }
+
+    if (!(ALLOWED_STATUS_TRANSITIONS[targetCase.status] || []).includes(CASE_STATUSES.DISPOSED)) {
+      return res.status(400).json({ success: false, message: `Case cannot be disposed from status ${targetCase.status}.` });
     }
 
     const timelineItem = {

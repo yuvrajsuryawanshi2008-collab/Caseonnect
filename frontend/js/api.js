@@ -34,10 +34,15 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers
-      });
+      let response;
+      try {
+        response = await fetch(url, {
+          ...options,
+          headers
+        });
+      } catch (networkErr) {
+        throw new Error('Cannot reach the CaseConnect API. Start the backend on port 5000 or confirm the Vercel /api route is live.');
+      }
 
       // Safe body parsing to prevent SyntaxError on non-JSON or HTML responses
       let data = {};

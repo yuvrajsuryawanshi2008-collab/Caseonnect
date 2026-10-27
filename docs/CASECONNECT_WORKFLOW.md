@@ -2,7 +2,7 @@
 
 **Platform:** CaseConnect — Centralized Institution Complaint & Regulatory Monitoring Platform  
 **Target Solution:** Statutory Regulatory Oversight & Inter-Bureau Coordination (Regulation Bureau, PGRC, Approval Bureau, Policy Bureau, Chief Vigilance Cell)  
-**Database Architecture:** MongoDB with Mongoose ODM (Zero-configuration local fallback via embedded engine)  
+**Database Architecture:** Supabase PostgreSQL through the Node.js `pg` driver (no in-memory database fallback)
 **Project Path:** `C:\Users\Yuvraj\OneDrive\Desktop\Case Connect`  
 **Generated Date:** 2026-10-26  
 
@@ -25,7 +25,7 @@ In traditional systems, each bureau worked in isolation. If a college faced a fa
 ### The Beginner's End-to-End Walkthrough:
 1. **Starting Up:** The official double-clicks `start.bat` or runs `npm start`. The server boots up at `http://localhost:5000`.
 2. **Accessing the Portal:** The browser navigates to `http://localhost:5000`. The client-side router notices no authentication token is present in `localStorage` and immediately redirects to `#/login`.
-3. **Signing In:** The user clicks any of the "Authorized Test Credentials" buttons (e.g., *Super Admin* or *PGRC Officer*) or enters credentials manually. The client sends a `POST /api/auth/login` request.
+3. **Signing In:** The sign-in screen offers a Bureau Officer reference email that can be copied into the email field. Users enter an organization-issued password; passwords are not published in the application. The client sends a `POST /api/auth/login` request.
 4. **Receiving Credentials:** The backend validates credentials using Bcrypt, generates a signed JWT token containing the user's role and bureau, and returns it. The browser stores this token in `localStorage`.
 5. **Dashboard Overview:** The user lands on `#/dashboard`. A consolidated overview of active cases, ageing brackets (0–7 days, 8–15 days, 16–30 days, >30 days), bureau distribution, and alerts appears.
 6. **Registering a Case:** An officer clicks **"Register New Case"**. They enter the institution's Permanent ID, title, description, and severity.
@@ -40,7 +40,7 @@ In traditional systems, each bureau worked in isolation. If a college faced a fa
 
 ## 2. System Architecture
 
-CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by MongoDB.
+CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by Supabase PostgreSQL.
 
 - **Client Tier (SPA):** HTML5, Vanilla ES6+ Modular Architecture, Standard CSS Design System & Clean Elevated Card System, Client Hash Router (`#/dashboard`, `#/cases`, `#/institutions`), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).
 - **Server Tier (Node.js & Express):** Express.js Application Server (Port 5000), CORS Preflight & Global Security Headers (`nosniff`, `SAMEORIGIN`, `XSS block`), JWT Authentication Middleware & Role-Based Access Control (RBAC), 405 Method Not Allowed Interceptor & Safe JSON Error Responder.
@@ -48,7 +48,7 @@ CaseConnect is structured as a decoupled Single Page Application (SPA) served by
   - 3-Layer Overlap Detection Engine (Tokenization + Jaccard Similarity).
   - SLA Ageing & Escalation Engine (Periodic 30-min background interval).
   - Immutable Audit Trail Ledger Service.
-- **Database Tier (MongoDB):** Primary Target: MongoDB Campus Database via `MONGODB_URI`. Self-Healing Development Fallback: Embedded In-Memory MongoDB Daemon (`mongodb-memory-server`).
+- **Database Tier (PostgreSQL):** Supabase PostgreSQL through a private `pg` connection pool. Configure `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` (or `DATABASE_URL`); data routes return HTTP 503 when the database is unavailable.
 
 ---
 
@@ -119,7 +119,7 @@ CaseConnect is structured as a decoupled Single Page Application (SPA) served by
 | Method | Endpoint | Purpose | Request Body | Auth Required | Frontend Caller |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/auth/login` | Official login | `{ email, password }` | Public | `login.js` |
-| `POST` | `/api/auth/register` | Official account creation | `{ employeeId, fullName, email, password, bureauId, designation, phoneNumber }` | Public | `login.js` |
+| `POST` | `/api/auth/register` | Submit an official registration (inactive until approved) | `{ employeeId, fullName, email, password, bureauId, designation, phoneNumber }` | Public; Super Admin activation required | `login.js` |
 | `GET` | `/api/auth/me` | Verify active session | None | Bearer JWT | `auth.js` |
 
 ### Complaint Cases Routes (`/api/cases`)
@@ -180,10 +180,10 @@ CaseConnect is structured as a decoupled Single Page Application (SPA) served by
 ## 7. Database Architecture & Data Models
 
 ### Database Provider
-- **Engine:** MongoDB (Document Database)
-- **Object Data Modeling (ODM):** Mongoose
-- **URI Configuration:** Configured in `backend/.env` via `MONGODB_URI`.
-- **Local Fallback:** If local MongoDB daemon is not running on port 27017, `backend/config/db.js` initializes an in-memory embedded MongoDB daemon (`mongodb-memory-server`), ensuring instant local development without external dependencies.
+- **Engine:** Supabase PostgreSQL
+- **Node.js Driver:** `pg` with a compatibility adapter in `backend/lib/pgModel.js`
+- **Connection Configuration:** Private environment variables in ignored `backend/.env`; see `DEPLOYMENT.md` for Vercel and TLS requirements.
+- **Offline Behavior:** No in-memory database fallback. Health reports connectivity state and data endpoints return HTTP 503 when PostgreSQL is unavailable.
 
 ### Document Schemas & Collections
 1. **`User` (`backend/models/User.js`):** Fields: `employeeId`, `fullName`, `email`, `passwordHash`, `role`, `bureauId`, `designation`, `phoneNumber`, `isActive`, `lastLogin`.
@@ -278,31 +278,29 @@ npm start
 PORT=5000
 NODE_ENV=development
 FRONTEND_URL=*
-MONGODB_URI=mongodb://127.0.0.1:27017/caseconnect
-JWT_SECRET=caseconnect_production_jwt_secret_key_2026_regulatory
+PGHOST=your-supabase-pooler-host
+PGPORT=6543
+PGUSER=your-supabase-pooler-user
+PGPASSWORD=your-supabase-database-password
+PGDATABASE=postgres
+JWT_SECRET=generate_a_unique_random_secret_with_at_least_32_bytes
 SESSION_EXPIRY=12h
 ```
 
 ---
 
-## 11. Authorized Demo Accounts
+## 11. Local Development Accounts
 
-| Role | Email | Password | Primary Scope |
-| :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin@caseconnect.gov.in` | `Admin@2026!` | Global governance, users, audit logs, SLA rules |
-| **PGRC Officer** | `pgrc.officer@caseconnect.gov.in` | `Officer@2026!` | Public Grievance Redressal Cell cases |
-| **RB Officer** | `rb.officer@caseconnect.gov.in` | `Officer@2026!` | Regulation Bureau compliance cases |
-| **Reviewer / Coordinator** | `reviewer@caseconnect.gov.in` | `Reviewer@2026!` | Cross-bureau overlap adjudication |
-| **Institution Representative** | `institution@caseconnect.gov.in` | `Institution@2026!` | Institutional 360° profile & responses |
+Demo accounts are restricted to local development. Production startup does not create default accounts.
 
 ---
 
 ## 12. Verification & Test Evidence
 
 ### 1. Critical Scenarios Test Suite (`tests/criticalScenarios.test.js`)
-- **16 / 16 Tests Passed (100% Success Rate)**
-- Validates tokenization, Jaccard lexical similarity, state transition machine, SLA overdue detection, statutory ID validation, all 9 Mongoose models, and zero Supabase remnants.
+- **25 / 25 Critical Scenarios Passed (100% Success Rate)**
+- Validates tokenization, Jaccard lexical similarity, state transition machine, SLA overdue detection, statutory ID validation, PostgreSQL model adapters, and Supabase schema presence.
 
 ### 2. Live Server End-to-End Test Suite (`tests/testLiveServer.js`)
-- **12 / 12 Tests Passed (100% Success Rate)**
-- Validates `/api/health`, static frontend delivery, Super Admin login, invalid credential rejection, registration, duplicate checks, session restoration, private route protection, benchmark data seeding, cross-bureau overlap detection, all 5 demo account logins, and HTTP 405 error formatting.
+- **Live suite passed (100% in the rollback-isolated run)**
+- Validates `/api/health`, static frontend delivery, Super Admin login, invalid credential rejection, registration, duplicate checks, session restoration, private route protection, benchmark data seeding, cross-bureau overlap detection, role-based login checks, and HTTP 405 error formatting.

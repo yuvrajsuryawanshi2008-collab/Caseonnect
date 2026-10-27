@@ -5,6 +5,8 @@
  */
 
 const BASE_URL = 'http://localhost:5000/api';
+const { startServer } = require('../backend/server');
+let serverInstance = null;
 
 async function post(path, body) {
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -142,6 +144,13 @@ async function testBackwardCompat() {
   console.log('='.repeat(60));
 
   try {
+    try {
+      const probe = await fetch('http://localhost:5000/api/health');
+      if (probe.status !== 200) throw new Error();
+    } catch (e) {
+      serverInstance = await startServer();
+    }
+
     testRoleMapping();
     await testRegistration();
     await testLogin();
@@ -149,6 +158,10 @@ async function testBackwardCompat() {
   } catch (err) {
     console.error('\n[FATAL]', err.message);
     failed++;
+  } finally {
+    if (serverInstance && typeof serverInstance.close === 'function') {
+      serverInstance.close();
+    }
   }
 
   console.log('\n' + '='.repeat(60));

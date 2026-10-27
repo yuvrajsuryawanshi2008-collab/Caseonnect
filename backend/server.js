@@ -3,10 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const { connectDB, isDbConnected, getDbError, requireDbConnection } = require('./config/db');
-const { initializeCoreSystem, loadBenchmarkData } = require('./utils/seedData');
+const { connectDB, closeDB, isDbConnected, getDbError, requireDbConnection } = require('./config/db');
+const { loadBenchmarkData } = require('./utils/seedData');
 const { scanAndProcessDeadlines } = require('./services/escalationEngine');
 const errorHandler = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/auth');
@@ -15,6 +16,23 @@ const { ROLES } = require('./config/constants');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+function listenApp(application, port) {
+  return new Promise((resolve, reject) => {
+    const server = application.listen(port);
+    const handleError = (err) => {
+      if (err.code === 'EADDRINUSE') {
+        err.message = `Port ${port} is already in use. Identify the existing process before starting another CaseConnect server.`;
+      }
+      reject(err);
+    };
+    server.once('listening', () => {
+      server.off('error', handleError);
+      resolve(server);
+    });
+    server.once('error', handleError);
+  });
+}
 
 // Security Headers Middleware
 app.use((req, res, next) => {
@@ -30,7 +48,7 @@ const corsOptions = {
   origin: process.env.FRONTEND_URL || '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true
+  credentials: false
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -39,17 +57,29 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint (always accessible regardless of DB state)
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  if (!isDbConnected()) {
+    try {
+      // Serverless cold starts do not run startServer(); make readiness checks
+      // initialize the same database connection used by data routes.
+      await connectDB();
+    } catch {
+      // Keep health available while reporting the dependency as degraded.
+    }
+  }
+
   const dbConnected = isDbConnected();
   res.json({
-    status: 'ONLINE',
+    status: dbConnected ? 'ONLINE' : 'DEGRADED',
     service: 'CaseConnect AICTE Monitoring API',
     version: '2.0.0',
     database: {
       connected: dbConnected,
       status: dbConnected ? 'ONLINE' : 'DISCONNECTED',
-      provider: 'MongoDB Database (Campus Cluster)',
-      error: getDbError()
+      provider: 'Supabase PostgreSQL (Transaction Pooler)',
+      error: dbConnected ? null : (getDbError() && /password authentication failed/i.test(getDbError())
+        ? 'Supabase rejected the configured database password.'
+        : 'Database is unavailable. Check the configured Supabase connection settings.')
     },
     timestamp: new Date().toISOString()
   });
@@ -160,23 +190,30 @@ app.use(errorHandler);
 
 // Start server
 async function startServer() {
-  await connectDB();
+  try {
+    await connectDB();
+  } catch (e) {
+    console.warn('[Server Startup Warning] Database is unavailable; data endpoints will return HTTP 503.');
+  }
 
-  if (isDbConnected()) {
-    await initializeCoreSystem();
-
-    // Run initial deadline and escalation check
-    try {
-      await scanAndProcessDeadlines();
-    } catch (e) {
-      console.warn('[Escalation Engine]', e.message);
-    }
-  } else {
+  if (!isDbConnected()) {
     console.warn('[Server Startup Warning] Database service is currently offline. Data endpoints will return HTTP 503.');
   }
 
-  // Periodic scheduled check every 30 minutes
-  setInterval(async () => {
+  let server;
+  try {
+    server = await listenApp(app, PORT);
+  } catch (err) {
+    if (require.main === module) await closeDB().catch(() => {});
+    throw err;
+  }
+
+  console.log('=======================================================');
+  console.log(' CaseConnect API started.');
+  console.log(' Server Port: http://localhost:' + PORT);
+  console.log('=======================================================');
+
+  const deadlineInterval = setInterval(async () => {
     if (isDbConnected()) {
       try {
         await scanAndProcessDeadlines();
@@ -185,20 +222,40 @@ async function startServer() {
       }
     }
   }, 30 * 60 * 1000);
+  deadlineInterval.unref?.();
+  server.once('close', () => clearInterval(deadlineInterval));
 
-  const server = app.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(` CaseConnect — AICTE Institution Complaint Monitoring Platform`);
-    console.log(` Database: MongoDB Campus Database`);
-    console.log(` Server Port: http://localhost:${PORT}`);
-    console.log(` Web Interface: http://localhost:${PORT}`);
-    console.log(`=======================================================`);
-  });
+  if (isDbConnected()) {
+    try {
+      await scanAndProcessDeadlines();
+    } catch (e) {
+      console.warn('[Escalation Engine]', e.message);
+    }
+  }
+
   return server;
 }
 
 if (require.main === module) {
-  startServer();
+  startServer().then((server) => {
+    let shuttingDown = false;
+    const shutdown = () => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      server.close(() => {
+        closeDB().catch(() => {});
+      });
+    };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
+  }).catch(async (err) => {
+    console.error('[Server Startup Error] ' + err.message);
+    await closeDB().catch(() => {});
+    process.exitCode = 1;
+  });
 }
 
-module.exports = { app, startServer };
+module.exports = app;
+module.exports.app = app;
+module.exports.startServer = startServer;
+module.exports.listenApp = listenApp;

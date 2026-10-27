@@ -1,6 +1,6 @@
 /**
- * CaseConnect Automated Critical Scenarios Test Suite (MongoDB Mongoose Architecture)
- * Tests core operational requirements directly against the application logic and MongoDB schema.
+ * CaseConnect Automated Critical Scenarios Test Suite (Supabase PostgreSQL Architecture)
+ * Tests core operational requirements directly against application logic and PostgreSQL models.
  */
 
 const assert = require('assert');
@@ -12,11 +12,12 @@ process.env.NODE_ENV = 'test';
 const { tokenize, computeJaccardSimilarity, findMatchingTokens } = require('../backend/utils/textSimilarity');
 const { ALLOWED_STATUS_TRANSITIONS, CASE_STATUSES } = require('../backend/config/constants');
 const { calculateAgeing } = require('../backend/services/escalationEngine');
+const { buildWhere } = require('../backend/lib/pgModel');
 
 async function runTestSuite() {
   console.log('================================================================');
   console.log(' Starting CaseConnect Automated Critical Scenarios Quality Check');
-  console.log(' Architecture: MongoDB / Mongoose Enterprise Regulatory Engine');
+  console.log(' Architecture: Supabase PostgreSQL Enterprise Regulatory Engine');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -32,6 +33,35 @@ async function runTestSuite() {
       console.error(`[FAIL] Scenario ${total}: ${name} -> ${e.message}`);
     }
   }
+
+  test('Production and Vercel runtimes are marked as non-demo environments', () => {
+    const { isProductionRuntime, shouldSeedDemoAccounts } = require('../backend/utils/seedData');
+    assert.strictEqual(isProductionRuntime({ NODE_ENV: 'production' }), true);
+    assert.strictEqual(isProductionRuntime({ VERCEL: '1' }), true);
+    assert.strictEqual(isProductionRuntime({ NODE_ENV: 'development', DATABASE_URL: 'postgresql://user:pass@supabase.example:6543/postgres' }), true);
+    assert.strictEqual(isProductionRuntime({ NODE_ENV: 'development' }), false);
+    assert.strictEqual(isProductionRuntime({ NODE_ENV: 'development', DATABASE_URL: 'postgresql://user:pass@localhost:5432/postgres' }), false);
+    assert.strictEqual(shouldSeedDemoAccounts(0, { NODE_ENV: 'production' }), false);
+    assert.strictEqual(shouldSeedDemoAccounts(0, { VERCEL: '1' }), false);
+    assert.strictEqual(shouldSeedDemoAccounts(0, { NODE_ENV: 'development', DATABASE_URL: 'postgresql://user:pass@supabase.example:6543/postgres' }), false);
+    assert.strictEqual(shouldSeedDemoAccounts(0, { NODE_ENV: 'development' }), true);
+    assert.strictEqual(shouldSeedDemoAccounts(1, { NODE_ENV: 'development' }), false);
+  });
+
+  test('Prototype sample logins are visible while form credentials remain unfilled by default', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const officialLogin = fs.readFileSync(path.join(__dirname, '../frontend/js/pages/login.js'), 'utf8');
+    const studentLogin = fs.readFileSync(path.join(__dirname, '../frontend/js/pages/studentLogin.js'), 'utf8');
+    assert(officialLogin.includes('SIH prototype sample — Official Console'));
+    assert(studentLogin.includes('SIH prototype sample — User Portal'));
+    assert(officialLogin.includes('useDemoOfficialAccount'));
+    assert(studentLogin.includes('useDemoStudentAccount'));
+    assert(!/id="loginEmail"[^>]*\bvalue=/s.test(officialLogin));
+    assert(!/id="loginPassword"[^>]*\bvalue=/s.test(officialLogin));
+    assert(!/id="studentLoginEmail"[^>]*\bvalue=/s.test(studentLogin));
+    assert(!/id="studentLoginPassword"[^>]*\bvalue=/s.test(studentLogin));
+  });
 
   // 1. Text similarity & tokenization test
   test('Tokenization and Stopword Removal strips non-essential words', () => {
@@ -107,6 +137,51 @@ async function runTestSuite() {
     assert.strictEqual(ageing.daysRemaining, 10);
   });
 
+  // PostgreSQL institution search must use parameterized, literal substring matching.
+  test('PostgreSQL adapter compiles institution text search filters safely', () => {
+    const search = buildWhere({ $or: [
+      { name: { $regex: 'a%_b', $options: 'i' } },
+      { city: { $regex: 'a%_b', $options: 'i' } }
+    ] });
+    assert(search.clause.includes('ILIKE'));
+    assert(search.clause.includes("ESCAPE E'\\\\'"));
+    assert.deepStrictEqual(search.params, ['%a\\%\\_b%', '%a\\%\\_b%']);
+  });
+
+  test('DATABASE_URL encoder percent-encodes reserved password characters without double-encoding', () => {
+    const { encodeDatabaseUrl } = require('../backend/config/db');
+    const raw = 'postgresql://postgres.ref:p,a/ss+word@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres';
+    const encoded = encodeDatabaseUrl(raw);
+    const parsed = new URL(encoded);
+    assert.strictEqual(parsed.hostname, 'aws-0-ap-southeast-2.pooler.supabase.com');
+    assert.strictEqual(parsed.port, '6543');
+    assert.strictEqual(parsed.username, 'postgres.ref');
+    assert.strictEqual(decodeURIComponent(parsed.password), 'p,a/ss+word');
+    assert.strictEqual(encodeDatabaseUrl(encoded), encoded);
+  });
+
+  test('DATABASE_URL takes precedence over stale discrete PG variables', () => {
+    const { buildPoolConfig } = require('../backend/config/db');
+    const names = ['DATABASE_URL', 'PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
+    const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
+    try {
+      process.env.DATABASE_URL = 'postgresql://url-user:url-password@db-url.example:6543/postgres';
+      process.env.PGHOST = 'stale-host.example';
+      process.env.PGPORT = '5432';
+      process.env.PGUSER = 'stale-user';
+      process.env.PGPASSWORD = 'stale-password';
+      process.env.PGDATABASE = 'stale-database';
+      const result = buildPoolConfig();
+      assert.strictEqual(result.mode, 'DATABASE_URL');
+      assert.strictEqual(new URL(result.config.connectionString).hostname, 'db-url.example');
+    } finally {
+      for (const name of names) {
+        if (previous[name] === undefined) delete process.env[name];
+        else process.env[name] = previous[name];
+      }
+    }
+  });
+
   // 8. Disposed case is not marked overdue
   test('Formally disposed case is not flagged as overdue even after deadline passes', () => {
     const now = new Date();
@@ -177,8 +252,8 @@ async function runTestSuite() {
     }
   });
 
-  // 12. Complete Documentation & MongoDB Mongoose Models Check
-  test('Mandatory architectural documents and MongoDB Mongoose models exist', () => {
+  // 12. Complete Documentation & PostgreSQL Models Check
+  test('Mandatory architecture documents and PostgreSQL models exist', () => {
     const docs = [
       '../docs/PROBLEM_RESEARCH.md',
       '../docs/DESIGN_REFERENCE.md',
@@ -195,6 +270,8 @@ async function runTestSuite() {
       '../backend/models/Notification.js',
       '../backend/models/AuditLog.js',
       '../backend/models/SystemConfig.js',
+      '../backend/lib/pgModel.js',
+      '../docs/schema.sql',
       '../README.md'
     ];
     for (const d of docs) {
@@ -220,12 +297,12 @@ async function runTestSuite() {
     assert(!content.includes('hackathon'), 'No hackathon text allowed in CSS');
   });
 
-  // 15. MongoDB / Mongoose Active Architecture & Zero Supabase Verification
-  test('Active Mongoose architecture and zero Supabase dependencies in backend', () => {
+  // 15. Supabase PostgreSQL Active Architecture & pg Driver Verification
+  test('Active Supabase PostgreSQL architecture with pg driver verified in backend', () => {
     const pkgPath = path.join(__dirname, '../backend/package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-    assert(pkg.dependencies.mongoose, 'Mongoose must be installed and active');
-    assert(!pkg.dependencies['@supabase/supabase-js'], '@supabase/supabase-js must be removed from dependencies');
+    assert(pkg.dependencies.pg, 'pg driver must be installed and active for Supabase PostgreSQL');
+    assert(!pkg.dependencies.mongoose, 'Mongoose must be removed from dependencies');
   });
 
   // 16. Demo account provisioner and launcher scripts check

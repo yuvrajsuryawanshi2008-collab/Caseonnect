@@ -1,6 +1,6 @@
 /**
  * CaseConnect Demo Accounts & Benchmark Provisioning Script
- * Populates verified demo accounts for all roles and seeds benchmark records into MongoDB.
+ * Populates verified demo accounts for all roles and seeds benchmark records into PostgreSQL.
  */
 
 const dotenv = require('dotenv');
@@ -13,7 +13,7 @@ const User = require('../models/User');
 const Student = require('../models/Student');
 const Bureau = require('../models/Bureau');
 const { ROLES } = require('../config/constants');
-const { initializeCoreSystem, loadBenchmarkData } = require('../utils/seedData');
+const { initializeCoreSystem, loadBenchmarkData, isProductionRuntime } = require('../utils/seedData');
 
 const DEMO_ACCOUNTS = [
   {
@@ -69,8 +69,14 @@ const DEMO_ACCOUNTS = [
 ];
 
 async function run() {
+  if (isProductionRuntime()) {
+    console.error('[Provisioning Error] Demo accounts can be provisioned only against a local development database.');
+    process.exitCode = 1;
+    return;
+  }
+
   console.log('===============================================================');
-  console.log(' CaseConnect — MongoDB Demo Accounts & Benchmark Provisioner');
+  console.log(' CaseConnect — Supabase PostgreSQL Demo Accounts & Benchmark Provisioner');
   console.log('===============================================================\n');
 
   try {
@@ -137,16 +143,7 @@ async function run() {
     const benchmarkResult = await loadBenchmarkData();
     console.log(`[Result] ${benchmarkResult.message}`);
 
-    console.log('\n===============================================================');
-    console.log(' Setup Complete! The following accounts are active in MongoDB:');
-    console.log('---------------------------------------------------------------');
-    console.log(' 1. Super Admin:      admin@caseconnect.gov.in        / Admin@2026!');
-    console.log(' 2. PGRC Officer:     pgrc.officer@caseconnect.gov.in / Officer@2026!');
-    console.log(' 3. RB Officer:       rb.officer@caseconnect.gov.in   / Officer@2026!');
-    console.log(' 4. Coordinator/Rev:  reviewer@caseconnect.gov.in     / Reviewer@2026!');
-    console.log(' 5. Institution Rep:  institution@caseconnect.gov.in  / Institution@2026!');
-    console.log(' 6. Student Demo:     student@caseconnect.gov.in      / Student@2026!');
-    console.log('===============================================================\n');
+    console.log('\n[Provisioning Complete] Local development demo accounts and benchmark data are ready.');
     process.exit(0);
   } catch (err) {
     console.error('Provisioning failed:', err.message);

@@ -1,17 +1,19 @@
 {
   "name": "caseconnect",
   "version": "2.0.0",
-  "description": "CaseConnect - Centralized Institution-Related Complaint & Regulatory Case Monitoring Platform (MongoDB Mongoose & Standard CSS)",
+  "description": "CaseConnect - Centralized Institution-Related Complaint & Regulatory Case Monitoring Platform (Supabase PostgreSQL & Standard CSS)",
   "scripts": {
     "start": "node backend/server.js",
     "dev": "cd backend && npm run dev",
-    "build": "node -e \"console.log('Production build: Standard CSS assets and client SPA verified successfully.')\"",
+    "build": "node scripts/verify-build.js",
     "seed:demo": "cd backend && node scripts/provisionDemoAccounts.js",
-    "test": "node tests/criticalScenarios.test.js",
-    "test:e2e": "node tests/testLiveServer.js"
+    "test": "node tests/criticalScenarios.test.js && node tests/startupSafety.test.js",
+    "test:e2e": "node tests/testLiveServer.js",
+    "test:auth": "node tests/userAuthExtension.test.js",
+    "test:all": "node tests/criticalScenarios.test.js && node tests/startupSafety.test.js && node tests/testLiveServer.js && node tests/userAuthExtension.test.js"
   },
   "keywords": [
-    "mongodb-mongoose",
+    "supabase-postgresql",
     "standard-css",
     "student-authentication",
     "institution-monitoring",
@@ -19,6 +21,17 @@
     "cross-bureau-coordination",
     "regulatory-compliance"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.23.1"
+  },
   "author": "CaseConnect Architectural Engineering Team",
   "license": "UNLICENSED"
 }

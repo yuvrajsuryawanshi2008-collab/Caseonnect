@@ -1,8 +1,8 @@
 @echo off
-title CaseConnect Institutional Monitoring Platform (MongoDB Campus)
+title CaseConnect Institutional Monitoring Platform (Supabase PostgreSQL)
 echo =========================================================================
 echo   Starting CaseConnect Centralized Regulatory Monitoring Platform...
-echo   Database: MongoDB Campus Database
+echo   Database: Supabase PostgreSQL
 echo =========================================================================
 cd /d "%~dp0backend"
 if not exist node_modules (

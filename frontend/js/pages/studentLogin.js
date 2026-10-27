@@ -96,15 +96,12 @@ function renderStudentLoginPage(container) {
           </button>
         </form>
 
-        <!-- Demo User Account Quick Autofill -->
-        <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border);">
-          <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 0.65rem; text-align: center;">
-            Demo Accounts (Click to Autofill)
-          </div>
-          <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: flex-start; text-align: left; padding: 0.5rem 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.4rem;" onclick="populateStudentCredentials('student@caseconnect.gov.in', 'Student@2026!')">
-            <span class="badge badge-indigo" style="font-size: 0.68rem;">Institution Rep</span>
-            <span style="font-size: 0.78rem; margin-left: 0.5rem; font-weight: 600;">student@caseconnect.gov.in</span>
-          </button>
+        <div id="studentDemoLoginReference" style="margin-top: 1rem; padding: 0.75rem 0.9rem; border: 1px solid #fcd34d; border-radius: var(--radius-md); background: #fffbeb; font-size: 0.78rem; color: #78350f;">
+          <strong style="display: block; color: #78350f; margin-bottom: 0.25rem;">SIH prototype sample — User Portal</strong>
+          <span>Email: <code>student@caseconnect.gov.in</code></span><br />
+          <span>Password: <code>Student@2026!</code></span>
+          <button type="button" id="useDemoStudentAccount" style="display: block; margin-top: 0.45rem; padding: 0; border: 0; background: none; color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer;">Fill sample login</button>
+          <span style="display: block; margin-top: 0.35rem;">Shared public demo account. Use only with synthetic prototype data.</span>
         </div>
 
         <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: var(--color-text-muted);">
@@ -134,6 +131,14 @@ function renderStudentLoginPage(container) {
   function hideAlert() {
     if (alertBox) alertBox.style.display = 'none';
   }
+
+  document.getElementById('useDemoStudentAccount')?.addEventListener('click', () => {
+    const emailInput = document.getElementById('studentLoginEmail');
+    const passwordInput = document.getElementById('studentLoginPassword');
+    if (emailInput) emailInput.value = 'student@caseconnect.gov.in';
+    if (passwordInput) passwordInput.value = 'Student@2026!';
+    passwordInput?.focus();
+  });
 
   // Toggle password visibility
   document.getElementById('toggleStudentPassword')?.addEventListener('click', (e) => {
@@ -173,12 +178,4 @@ function renderStudentLoginPage(container) {
   });
 }
 
-function populateStudentCredentials(email, pwd) {
-  const emailInput = document.getElementById('studentLoginEmail');
-  const pwdInput = document.getElementById('studentLoginPassword');
-  if (emailInput) emailInput.value = email;
-  if (pwdInput) pwdInput.value = pwd;
-}
-
 window.renderStudentLoginPage = renderStudentLoginPage;
-window.populateStudentCredentials = populateStudentCredentials;

@@ -7,6 +7,27 @@ const Case = require('../models/Case');
 const { ROLES } = require('../config/constants');
 const { scanForOverlaps } = require('../services/overlapEngine');
 
+function isProductionRuntime(env = process.env) {
+  if (env.NODE_ENV === 'production' || Boolean(env.VERCEL)) return true;
+
+  const databaseUrl = env.DATABASE_URL;
+  if (databaseUrl) {
+    try {
+      const hostname = new URL(databaseUrl).hostname.toLowerCase();
+      return !['localhost', '127.0.0.1', '::1'].includes(hostname);
+    } catch {
+      return true;
+    }
+  }
+
+  const pgHost = String(env.PGHOST || '').trim().toLowerCase();
+  return Boolean(pgHost && !['localhost', '127.0.0.1', '::1'].includes(pgHost));
+}
+
+function shouldSeedDemoAccounts(userCount, env = process.env) {
+  return userCount === 0 && !isProductionRuntime(env);
+}
+
 const DEFAULT_BUREAUS = [
   {
     code: 'RB',
@@ -67,8 +88,12 @@ async function initializeCoreSystem() {
 
     // 2. Initialize Default Accounts for all roles if no users exist
     const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log('[System Init] Creating initial authorized administrator credentials...');
+    const production = isProductionRuntime();
+    if (userCount === 0 && production) {
+      console.warn('[System Init] No official accounts exist. Demo account creation is disabled in production; provision an administrator through a secure operator workflow.');
+    }
+    if (shouldSeedDemoAccounts(userCount)) {
+      console.log('[System Init] Creating local development demo accounts.');
       const salt = await bcrypt.genSalt(10);
       const adminPasswordHash = await bcrypt.hash('Admin@2026!', salt);
 
@@ -156,13 +181,7 @@ async function initializeCoreSystem() {
         isActive: true
       });
 
-      console.log('[System Init] Authorized initial accounts created:');
-      console.log('  1. Super Admin:      admin@caseconnect.gov.in        / Admin@2026!');
-      console.log('  2. PGRC Officer:     pgrc.officer@caseconnect.gov.in / Officer@2026!');
-      console.log('  3. RB Officer:       rb.officer@caseconnect.gov.in   / Officer@2026!');
-      console.log('  4. Coordinator/Rev:  reviewer@caseconnect.gov.in     / Reviewer@2026!');
-      console.log('  5. Institution Rep:  institution@caseconnect.gov.in  / Institution@2026!');
-      console.log('  6. Student Demo:     student@caseconnect.gov.in      / Student@2026!');
+      console.log('[System Init] Local development demo accounts created.');
     }
   } catch (err) {
     console.error('[System Init Error]', err.message);
@@ -345,5 +364,7 @@ async function loadBenchmarkData() {
 
 module.exports = {
   initializeCoreSystem,
-  loadBenchmarkData
+  loadBenchmarkData,
+  isProductionRuntime,
+  shouldSeedDemoAccounts
 };

@@ -1,5 +1,7 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "buildCommand": "npm run build",
   "builds": [
     {
       "src": "backend/server.js",
@@ -16,8 +18,12 @@
       "dest": "backend/server.js"
     },
     {
+      "src": "/(css|js)/(.*)",
+      "dest": "/frontend/$1/$2"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "/frontend/index.html"
     }
   ]
 }

@@ -181,7 +181,7 @@
   <h1>CaseConnect: Technical Workflow &amp; Architecture Documentation</h1>
 <p><strong>Platform:</strong> CaseConnect — Centralized Institution Complaint &amp; Regulatory Monitoring Platform  </p>
 <p><strong>Target Solution:</strong> Statutory Regulatory Oversight &amp; Inter-Bureau Coordination (Regulation Bureau, PGRC, Approval Bureau, Policy Bureau, Chief Vigilance Cell)  </p>
-<p><strong>Database Architecture:</strong> MongoDB with Mongoose ODM (Zero-configuration local fallback via embedded engine)  </p>
+<p><strong>Database Architecture:</strong> Supabase PostgreSQL via the Node.js pg driver  </p>
 <p><strong>Project Path:</strong> <code>C:\Users\Yuvraj\OneDrive\Desktop\Case Connect</code>  </p>
 <p><strong>Generated Date:</strong> 2026-10-26  </p>
 <hr/>
@@ -212,7 +212,7 @@
 <div class="list-item-num"><b>10.</b> <strong>Signing Out:</strong> Clicking <strong>"Logout"</strong> purges the token from memory and <code>localStorage</code>, redirecting safely back to <code>#/login</code>.</div>
 <hr/>
 <h2>2. System Architecture</h2>
-<p>CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by MongoDB.</p>
+<p>CaseConnect is structured as a decoupled Single Page Application (SPA) served by an Express.js backend backed by Supabase PostgreSQL.</p>
 <ul>
 <li><strong>Client Tier (SPA):</strong> HTML5, Vanilla ES6+ Modular Architecture, Standard CSS Design System &amp; Clean Elevated Card System, Client Hash Router (<code>#/dashboard</code>, <code>#/cases</code>, <code>#/institutions</code>), Dynamic API Base URL Resolution (Zero 405 on Live Server / Static Hosting).</li>
 <li><strong>Server Tier (Node.js &amp; Express):</strong> Express.js Application Server (Port 5000), CORS Preflight &amp; Global Security Headers (<code>nosniff</code>, <code>SAMEORIGIN</code>, <code>XSS block</code>), JWT Authentication Middleware &amp; Role-Based Access Control (RBAC), 405 Method Not Allowed Interceptor &amp; Safe JSON Error Responder.</li>
@@ -220,7 +220,7 @@
 <p>  - 3-Layer Overlap Detection Engine (Tokenization + Jaccard Similarity).</p>
 <p>  - SLA Ageing &amp; Escalation Engine (Periodic 30-min background interval).</p>
 <p>  - Immutable Audit Trail Ledger Service.</p>
-<li><strong>Database Tier (MongoDB):</strong> Primary Target: MongoDB Campus Database via <code>MONGODB_URI</code>. Self-Healing Development Fallback: Embedded In-Memory MongoDB Daemon (<code>mongodb-memory-server</code>).</li>
+<li><strong>Database Tier (PostgreSQL):</strong> Supabase PostgreSQL through a private pg pool. Configure PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE, and production CA verification.</li>
 </ul>
 <hr/>
 <h2>3. Application Workflow (User Journey)</h2>
@@ -666,10 +666,10 @@
 <h2>7. Database Architecture &amp; Data Models</h2>
 <h3>Database Provider</h3>
 <ul>
-<li><strong>Engine:</strong> MongoDB (Document Database)</li>
-<li><strong>Object Data Modeling (ODM):</strong> Mongoose</li>
-<li><strong>URI Configuration:</strong> Configured in <code>backend/.env</code> via <code>MONGODB_URI</code>.</li>
-<li><strong>Local Fallback:</strong> If local MongoDB daemon is not running on port 27017, <code>backend/config/db.js</code> initializes an in-memory embedded MongoDB daemon (<code>mongodb-memory-server</code>), ensuring instant local development without external dependencies.</li>
+<li><strong>Engine:</strong> Supabase PostgreSQL</li>
+<li><strong>Node.js Driver:</strong> pg with the compatibility adapter in backend/lib/pgModel.js</li>
+<li><strong>Connection Configuration:</strong> Private environment variables in ignored backend/.env; see DEPLOYMENT.md.</li>
+<li><strong>Offline Behavior:</strong> No in-memory database fallback. Data endpoints return HTTP 503 when PostgreSQL is unavailable.</li>
 </ul>
 <h3>Document Schemas &amp; Collections</h3>
 <div class="list-item-num"><b>1.</b> <strong><code>User</code> (<code>backend/models/User.js</code>):</strong> Fields: <code>employeeId</code>, <code>fullName</code>, <code>email</code>, <code>passwordHash</code>, <code>role</code>, <code>bureauId</code>, <code>designation</code>, <code>phoneNumber</code>, <code>isActive</code>, <code>lastLogin</code>.</div>
@@ -771,64 +771,27 @@ NODE_ENV=development
 
 FRONTEND_URL=*
 
-MONGODB_URI=mongodb://127.0.0.1:27017/caseconnect
+PGHOST=your-supabase-pooler-host<br>PGPORT=6543<br>PGUSER=your-supabase-pooler-user<br>PGPASSWORD=your-supabase-database-password<br>PGDATABASE=postgres
 
-JWT_SECRET=caseconnect_production_jwt_secret_key_2026_regulatory
+JWT_SECRET=generate_a_unique_random_secret_with_at_least_32_bytes
 
 SESSION_EXPIRY=12h
 
 </code></pre>
 <hr/>
-<h2>11. Authorized Demo Accounts</h2>
-<div class="table-container"><table>
-<thead><tr>
-<th>Role</th>
-<th>Email</th>
-<th>Password</th>
-<th>Primary Scope</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>Super Admin</strong></td>
-<td><code>admin@caseconnect.gov.in</code></td>
-<td><code>Admin@2026!</code></td>
-<td>Global governance, users, audit logs, SLA rules</td>
-</tr>
-<tr>
-<td><strong>PGRC Officer</strong></td>
-<td><code>pgrc.officer@caseconnect.gov.in</code></td>
-<td><code>Officer@2026!</code></td>
-<td>Public Grievance Redressal Cell cases</td>
-</tr>
-<tr>
-<td><strong>RB Officer</strong></td>
-<td><code>rb.officer@caseconnect.gov.in</code></td>
-<td><code>Officer@2026!</code></td>
-<td>Regulation Bureau compliance cases</td>
-</tr>
-<tr>
-<td><strong>Reviewer / Coordinator</strong></td>
-<td><code>reviewer@caseconnect.gov.in</code></td>
-<td><code>Reviewer@2026!</code></td>
-<td>Cross-bureau overlap adjudication</td>
-</tr>
-<tr>
-<td><strong>Institution Representative</strong></td>
-<td><code>institution@caseconnect.gov.in</code></td>
-<td><code>Institution@2026!</code></td>
-<td>Institutional 360° profile &amp; responses</td>
-</tr>
-</tbody></table></div>
-<hr/>
+<h2>11. Local Development Accounts</h2>
+<p>Demo accounts are restricted to local development. Production startup does not create default accounts.</p>
+
 <h2>12. Verification &amp; Test Evidence</h2>
 <h3>1. Critical Scenarios Test Suite (<code>tests/criticalScenarios.test.js</code>)</h3>
 <ul>
-<li><strong>16 / 16 Tests Passed (100% Success Rate)</strong></li>
-<li>Validates tokenization, Jaccard lexical similarity, state transition machine, SLA overdue detection, statutory ID validation, all 9 Mongoose models, and zero Supabase remnants.</li>
+<li><strong>25 / 25 Critical Scenarios Passed (100% Success Rate)</strong></li>
+<li>Validates tokenization, Jaccard lexical similarity, state transition machine, SLA overdue detection, statutory ID validation, PostgreSQL model adapters and Supabase schema compatibility.</li>
 </ul>
 <h3>2. Live Server End-to-End Test Suite (<code>tests/testLiveServer.js</code>)</h3>
 <ul>
-<li><strong>12 / 12 Tests Passed (100% Success Rate)</strong></li>
-<li>Validates <code>/api/health</code>, static frontend delivery, Super Admin login, invalid credential rejection, registration, duplicate checks, session restoration, private route protection, benchmark data seeding, cross-bureau overlap detection, all 5 demo account logins, and HTTP 405 error formatting.</li>
+<li><strong>Live suite passed (rollback-isolated database run)</strong></li>
+<li>Validates <code>/api/health</code>, static frontend delivery, Super Admin login, invalid credential rejection, registration, duplicate checks, session restoration, private route protection, benchmark data seeding, cross-bureau overlap detection, role-based login checks, and HTTP 405 error formatting.</li>
 </ul>
 </body>
 </html>

@@ -7,19 +7,20 @@ CaseConnect is an enterprise regulatory web platform designed for monitoring, tr
 ## 1. Architecture & Technology Stack
 
 - **Frontend**: HTML5, Modern ES6+ Modular JavaScript, Standard CSS Design System (custom variables, responsive media queries, flexbox/grid layout, and zero external CSS runtime dependencies), Enterprise Design System inspired by the CampusX layout (clean elevated cards, sticky navigation header, Ctrl+K quick search, accessible modals, and status badges).
-- **Backend**: Node.js, Express.js REST API, Centralized Error Handling, JWT Bearer Authentication, Strict RBAC Middleware, Security Headers.
-- **Database**: **MongoDB (Campus Database)** with Mongoose schemas, indexes, and automated embedded local daemon fallback (`mongodb-memory-server`) for zero-configuration local development.
-- **Security**: Bcrypt password hashing, JWT authentication, OWASP security protections, immutable audit trail, input validation, and role-based route guards.
+- **Backend**: Node.js, Express.js REST API with Vercel Serverless Function compatibility, Centralized Error Handling, JWT Bearer Authentication, Strict RBAC Middleware, Security Headers.
+- **Database**: **Supabase PostgreSQL** via transaction pooler (`pg` Pool), schema migrations with Row Level Security (RLS) policies, foreign keys, triggers, and JSONB document support.
+- **Security**: Bcrypt password hashing, JWT authentication, Supabase Row Level Security (RLS) policies, OWASP security protections, immutable audit trail, input validation, and role-based route guards.
+- **Hosting & Deployment**: Configured and production-ready for **Vercel** serverless hosting with static frontend caching and dynamic `/api/*` serverless routing.
 
 ---
 
-## 2. MongoDB Models & Schemas
+## 2. Supabase PostgreSQL Schema & Models
 
-All schemas, relationships, indexes, and validation rules are located in `backend/models/`:
-1. **`Student.js`**: Dedicated student profile model, containing full name, email, institution/college, course, branch, academic year, student ID, phone number, and hashed credentials.
+All models and schemas are located in `backend/models/` and backed by Supabase PostgreSQL:
+1. **`Student.js`**: Dedicated student and portal user profiles (Students, Faculty, Stakeholders, Institution Reps).
 2. **`Bureau.js`**: Regulatory bureaus, jurisdiction scopes, and statutory capacity limits.
 3. **`Institution.js`**: Technical institutions, statutory permanent IDs, intake, location, and risk scores.
-4. **`User.js`**: Official profiles, employee IDs, hashed credentials, and role assignments (`SUPER_ADMIN`, `BUREAU_OFFICER`, `REGIONAL_REVIEWER`, `INSTITUTION_USER`).
+4. **`User.js`**: Official staff profiles, employee IDs, hashed credentials, and role assignments (`SUPER_ADMIN`, `BUREAU_OFFICER`, `REGIONAL_REVIEWER`, `INSTITUTION_USER`).
 5. **`Case.js`**: Comprehensive complaint dockets, SLA deadlines, petitioner data, timeline events, remarks, and documents.
 6. **`OverlapReview.js`**: 3-layer cross-bureau overlap detection records with confidence scores and human review determinations.
 7. **`CoordinationRequest.js`**: Inter-bureau joint coordination dockets and action notes.
@@ -39,109 +40,71 @@ Double-click `start.bat` in the project root. It will verify dependencies and la
 # 1. Navigate to project root
 cd "C:\Users\Yuvraj\OneDrive\Desktop\Case Connect"
 
-# 2. Install backend dependencies (if first time)
-cd backend
-npm install
-cd ..
-
-# 3. Seed demo accounts & benchmark data
+# 2. Optional: seed local demo accounts (refuses remote databases)
 npm run seed:demo
 
-# 4. Launch the platform
+# 3. Launch the platform
 npm start
 ```
 The server will start at **`http://localhost:5000`** and automatically serve the web interface.
 
 ---
 
-## 4. Configuring Your MongoDB Campus Database
+## 4. Configuring Supabase PostgreSQL Connection
 
-To connect to your existing MongoDB Campus cluster or local instance:
-1. Open `backend/.env` (or root `.env`).
-2. Set `MONGODB_URI`:
+CaseConnect connects directly to Supabase PostgreSQL using connection pooling (recommended for Vercel serverless):
+
+1. Set the following environment variables in `backend/.env` or in Vercel Project Settings:
    ```env
    PORT=5000
-   NODE_ENV=development
+   NODE_ENV=production
    FRONTEND_URL=*
    
-   # For local MongoDB Campus:
-   MONGODB_URI=mongodb://127.0.0.1:27017/caseconnect
+   # Supabase Transaction Pooler connection string
+   DATABASE_URL=postgresql://postgres.PROJECT_REF:YOUR_ENCODED_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres
    
-   # Or for remote MongoDB Campus cluster:
-   # MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/caseconnect?retryWrites=true&w=majority
-   
-   JWT_SECRET=caseconnect_production_jwt_secret_key_2026_regulatory
+   # Application Security
+   JWT_SECRET=generate_a_unique_random_secret_with_at_least_32_bytes
    SESSION_EXPIRY=12h
    ```
-3. Restart the server (`npm start`). CaseConnect connects directly to the specified database.
-4. *Self-Healing Development Mode*: If local `mongod` is not running on port 27017 and no remote URI is configured, the system automatically starts an in-memory embedded MongoDB daemon (`mongodb-memory-server`), ensuring the application and all tests work out of the box.
+
+2. **Schema & RLS Policies**:
+   - `docs/schema.sql`: Full DDL schema for all tables, indexes, and updated_at triggers.
+   - `backend/migrations/001_enable_rls_and_policies.sql`: Enables Row Level Security (RLS) across all 10 tables and establishes least-privilege policies.
 
 ---
 
-## 5. Resolution of API HTTP 405 Method Not Allowed
+## 5. Vercel Production Deployment
 
-The root causes of HTTP 405 Method Not Allowed have been resolved:
-1. **Dynamic Frontend API Base URL**: `frontend/js/config.js` dynamically detects the running port. If opened on VS Code Live Server (`:5500`), Vite (`:5173`), or `file://`, requests are automatically routed to `http://localhost:5000/api` rather than being handled by static web servers (which reject POST/PUT with 405).
-2. **CORS Preflight & Options**: Full CORS preflight handling (`app.options('*', cors())`) and allowed headers are configured on Express.
-3. **Structured JSON Errors**: When an unsupported HTTP method is called on an API route, Express returns a valid JSON error `{ success: false, error: "Method Not Allowed", message: "..." }` instead of HTML.
-4. **Deployment Rewrites**: `vercel.json` and `frontend/_redirects` are included to route `/api/*` directly to `backend/server.js` on cloud deployment platforms.
+CaseConnect is pre-configured for one-click deployment to Vercel:
+
+1. Push your repository to GitHub or GitLab.
+2. In Vercel, click **Add New Project** and select the repository.
+3. Configure the **Environment Variables** in Vercel:
+   - `DATABASE_URL` (Supabase Transaction Pooler URL, port `6543`)
+   - `JWT_SECRET`
+   - `NODE_ENV` (`production`)
+4. Click **Deploy**. Vercel will build the project using `vercel.json` and serve the static SPA with serverless `/api/*` handlers.
 
 ---
 
-## 6. Authorized Demo Accounts (Explore All Tabs & Roles)
+## 6. Local Development Accounts
 
-You can seed or reseed all demo accounts and benchmark records anytime by running:
+Local development demo accounts can be created with `npm run seed:demo` only against a local database. Production runtimes and remote database targets are blocked from seeding default credentials. Use organization-managed credentials for deployed environments.
+
+## 7. Verification & Automated Testing
+
+Run the automated test suites to verify system integrity:
 ```bash
-npm run seed:demo
-```
-
-The platform is pre-provisioned with authorized test accounts for all roles including students:
-
-| Role | Email | Password | Primary Accessible Scope |
-| :--- | :--- | :--- | :--- |
-| **Verified Student** | `student@caseconnect.gov.in` | `Student@2026!` | Student Grievance Portal (`#/student-dashboard`), profile update, grievance filing |
-| **Super Admin** | `admin@caseconnect.gov.in` | `Admin@2026!` | Global governance, Users, Student Registrations, Audit Logs, Workflow SLA settings |
-| **PGRC Officer** | `pgrc.officer@caseconnect.gov.in` | `Officer@2026!` | Public Grievance Redressal Cell cases, assignments, student grievance scrutiny |
-| **RB Officer** | `rb.officer@caseconnect.gov.in` | `Officer@2026!` | Regulation Bureau cases, norms compliance, institutional scrutiny |
-| **Reviewer / Coordinator** | `reviewer@caseconnect.gov.in` | `Reviewer@2026!` | Cross-bureau overlap review adjudication, joint coordination requests |
-| **Institution User** | `institution@caseconnect.gov.in` | `Institution@2026!` | Authorized institution 360° profile, related matters, compliance responses |
-
-> [!TIP]
-> On the login pages (`#/student-login` and `#/login`), you can click any of the **Demo Credentials** buttons to instantly autofill credentials and sign in.
-
----
-
-## 7. Student Registration & Authentication Portal
-
-Students have a dedicated portal integrated directly into CaseConnect:
-- **Student Sign-In**: `http://localhost:5000/#/student-login`
-- **Student Registration**: `http://localhost:5000/#/student-register`
-- **Protected Student Dashboard**: `http://localhost:5000/#/student-dashboard`
-
-### Information Collected:
-- Full Name
-- Verified Student Email Address
-- College / Technical Institution
-- Course & Degree Program (e.g., B.Tech, MCA, MBA)
-- Branch & Department (e.g., Computer Science, Mechanical)
-- Academic Year / Semester
-- Optional Roll / Enrollment ID and Mobile Number
-- Password & Confirmation (with minimum 8 characters and letter + number validation)
-
-All data is hashed and stored in the MongoDB `Student` collection. Duplicate accounts are prevented through server-side unique constraints.
-
----
-
-## 8. Verification & Automated Testing
-
-Run the test suites to verify system integrity:
-```bash
-# 1. Critical scenarios & architectural integrity checks (20 unit tests)
+# 1. Critical scenarios & startup safety checks (25 scenarios)
 npm test
 
-# 2. Live server, end-to-end API, student registration, login, and RBAC checks (15 e2e tests)
+# 2. Live server, end-to-end API, registration, login, and RBAC checks (15 e2e tests)
 node tests/testLiveServer.js
 
-# 3. Production build asset verification
+# 3. User auth extension tests (Faculty, Stakeholder, Inst Rep roles) (33 tests)
+node tests/userAuthExtension.test.js
+
+# 4. Production build asset verification
 npm run build
 ```

@@ -34,7 +34,8 @@ class AuthManager {
   }
 
   isStudent() {
-    return !!this.currentUser && this.currentUser.role === 'STUDENT';
+    const PORTAL_ROLES = ['STUDENT', 'ROLE_FACULTY', 'ROLE_STAKEHOLDER', 'ROLE_INSTITUTION_REP'];
+    return !!this.currentUser && PORTAL_ROLES.includes(this.currentUser.role);
   }
 
   async login(email, password) {
@@ -56,6 +57,7 @@ class AuthManager {
       localStorage.setItem('caseconnect_user', JSON.stringify(res.user));
       return res.user;
     }
+    if (res.success) return res;
     throw new Error(res.message || 'Registration failed');
   }
 
@@ -64,6 +66,12 @@ class AuthManager {
     try {
       return await this.userLogin(email, password);
     } catch (e) {
+      // Fall back only when an older deployment does not expose the alias.
+      // Credential, network, and database errors should be shown directly and
+      // must not trigger a redundant request to the legacy endpoint.
+      if (!/\b404\b|not found|endpoint.*missing/i.test(e.message || '')) {
+        throw e;
+      }
       const res = await window.API.post('/auth/student/login', { email, password });
       if (res.success && res.token) {
         window.API.setToken(res.token);
@@ -110,17 +118,20 @@ class AuthManager {
 
   async fetchMe() {
     try {
-      const endpoint = this.isStudent() ? '/auth/student/profile' : '/auth/me';
-      const res = await window.API.get(endpoint);
+      const res = await window.API.get('/auth/me');
       if (res.success && (res.user || res.student)) {
-        this.currentUser = res.student || res.user;
+        this.currentUser = res.user || res.student;
         localStorage.setItem('caseconnect_user', JSON.stringify(this.currentUser));
         return this.currentUser;
       }
     } catch (e) {
-      this.logout();
+      if (e.message && (e.message.includes('401') || e.message.includes('Session expired') || e.message.includes('revoked'))) {
+        this.logout();
+      } else {
+        console.warn('[Auth] Session profile refresh deferred:', e.message);
+      }
     }
-    return null;
+    return this.currentUser;
   }
 
   async updateStudentProfile(profileData) {

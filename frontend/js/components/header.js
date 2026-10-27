@@ -157,7 +157,7 @@ async function checkDatabaseStatus() {
         <span style="width: 7px; height: 7px; border-radius: 9999px; background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6);"></span>
         <span style="color: #10b981;">DB Online</span>
       `;
-      el.title = `Database Status: Online (${res.database?.provider || 'MongoDB Cluster'})`;
+      el.title = `Database Status: Online (${res.database?.provider || 'Database'})`;
     } else {
       el.innerHTML = `
         <span style="width: 7px; height: 7px; border-radius: 9999px; background: #ef4444;"></span>

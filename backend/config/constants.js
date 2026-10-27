@@ -18,6 +18,7 @@ const ROLES = {
 
 // Maps front-end userType dropdown value → internal role
 const USER_TYPE_TO_ROLE = {
+  'Student': 'STUDENT',
   'Faculty': 'ROLE_FACULTY',
   'Stakeholder': 'ROLE_STAKEHOLDER',
   'Institution Representative': 'ROLE_INSTITUTION_REP'

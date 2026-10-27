@@ -33,7 +33,7 @@ function request(urlPath, options = {}) {
 async function run() {
   console.log('======================================================');
   console.log(' CaseConnect Comprehensive Live Verification Suite');
-  console.log(' Engine: MongoDB / Mongoose Enterprise Engine');
+  console.log(' Engine: Supabase PostgreSQL Enterprise Engine');
   console.log('======================================================\n');
 
   let serverInstance = null;
@@ -47,7 +47,7 @@ async function run() {
     if (health.status !== 200 || !health.data.database.connected) {
       throw new Error(`Health check failed: ${JSON.stringify(health.data)}`);
     }
-    console.log(`   [PASS] Health API online, MongoDB connected (${health.data.database.provider}).\n`);
+    console.log(`   [PASS] Health API online, Supabase PostgreSQL connected (${health.data.database.provider}).\n`);
 
     // 2. Static Frontend Root
     console.log('2. Verifying static frontend delivery...');
@@ -110,13 +110,22 @@ async function run() {
       }
     });
 
-    if (regRes.status !== 201 || !regRes.data.token) {
+    if (regRes.status !== 201 || regRes.data.token || regRes.data.user?.isActive !== false) {
       throw new Error(`Registration failed: ${JSON.stringify(regRes.data)}`);
     }
     if (regRes.data.user.passwordHash) {
       throw new Error('Security flaw: passwordHash leaked in registration response!');
     }
-    console.log(`   [PASS] Official registered: ${regRes.data.user.fullName} (${regRes.data.user.employeeId})\n`);
+    console.log(`   [PASS] Official registration is pending approval: ${regRes.data.user.fullName} (${regRes.data.user.employeeId})\n`);
+
+    const pendingLogin = await request('/api/auth/login', {
+      method: 'POST',
+      body: { email: testEmail, password: 'Officer@2026!' }
+    });
+    if (pendingLogin.status !== 403 || pendingLogin.data.token) {
+      throw new Error('An unapproved official registration must not receive a login session.');
+    }
+    console.log('   [PASS] Pending official cannot sign in before Super Admin approval.\n');
 
     // 6. Test Duplicate Registration Rejection
     console.log('6. Verifying duplicate registration prevention...');
@@ -172,6 +181,53 @@ async function run() {
       throw new Error('Cases retrieval failed or returned empty docket');
     }
     console.log(`   [PASS] Docket retrieved successfully (${casesList.data.cases.length} cases found).`);
+
+    const institutionList = await request('/api/institutions', {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const testInstitution = institutionList.data.institutions?.[0];
+    if (institutionList.status !== 200 || !testInstitution) {
+      throw new Error('Could not retrieve an institution for complaint CRUD verification.');
+    }
+
+    const workflowSuffix = Date.now();
+    const createdComplaint = await request('/api/cases', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: {
+        institutionId: testInstitution.id || testInstitution._id,
+        bureauCode: 'RB',
+        title: `Rollback verification complaint ${workflowSuffix}`,
+        description: 'Temporary complaint used to verify the PostgreSQL create/read/status workflow.',
+        category: 'General Administrative Grievance',
+        severity: 'LOW',
+        petitionerName: 'Rollback Verification',
+        petitionerContact: `workflow.${workflowSuffix}@caseconnect.test`
+      }
+    });
+    if (createdComplaint.status !== 201 || !createdComplaint.data.case) {
+      throw new Error(`Complaint creation failed: ${JSON.stringify(createdComplaint.data)}`);
+    }
+    const createdComplaintId = createdComplaint.data.case._id || createdComplaint.data.case.id;
+    console.log('   [PASS] Complaint create API inserted a PostgreSQL record.');
+
+    const complaintDetails = await request(`/api/cases/${createdComplaintId}`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    if (complaintDetails.status !== 200 || complaintDetails.data.case.title !== `Rollback verification complaint ${workflowSuffix}`) {
+      throw new Error('Complaint detail read failed after creation.');
+    }
+    console.log('   [PASS] Complaint detail API read the created PostgreSQL record.');
+
+    const complaintTransition = await request(`/api/cases/${createdComplaintId}/status`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: { targetStatus: 'ASSIGNED', remarks: 'Rollback verification transition.' }
+    });
+    if (complaintTransition.status !== 200 || complaintTransition.data.case.status !== 'ASSIGNED') {
+      throw new Error(`Complaint status workflow failed: ${JSON.stringify(complaintTransition.data)}`);
+    }
+    console.log('   [PASS] Complaint status workflow atomically updated status and timeline.');
 
     const overlapsList = await request('/api/overlaps', {
       headers: { Authorization: `Bearer ${adminToken}` }
@@ -366,6 +422,43 @@ async function run() {
       throw new Error(`Student should be forbidden (403) from accessing official users, got ${studentAccessDenied.status}`);
     }
     console.log(`   [PASS] Official endpoint protected against student token (HTTP 403 Forbidden).`);
+
+    const studentCaseList = await request('/api/cases', {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    if (studentCaseList.status !== 200 || studentCaseList.data.cases.length !== 0) {
+      throw new Error('Student case list was not restricted to complaints filed by that account.');
+    }
+    console.log('   [PASS] Student case list is scoped to complaints filed by that account.');
+
+    const otherCaseId = casesList.data.cases[0]._id || casesList.data.cases[0].id;
+    const studentCaseDetails = await request(`/api/cases/${otherCaseId}`, {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    if (studentCaseDetails.status !== 404) {
+      throw new Error(`Student must not retrieve another petitioner's complaint, got ${studentCaseDetails.status}.`);
+    }
+    console.log('   [PASS] Student cannot retrieve another petitioner’s complaint.');
+
+    const studentStatusChange = await request(`/api/cases/${otherCaseId}/status`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${studentToken}` },
+      body: { targetStatus: 'DISPOSED' }
+    });
+    if (studentStatusChange.status !== 403) {
+      throw new Error(`Student status change must be forbidden, got ${studentStatusChange.status}.`);
+    }
+    console.log('   [PASS] Student cannot change an official complaint status.');
+
+    const studentRemark = await request(`/api/cases/${otherCaseId}/remarks`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${studentToken}` },
+      body: { comment: 'Unauthorized test remark' }
+    });
+    if (studentRemark.status !== 403) {
+      throw new Error(`Student internal remark must be forbidden, got ${studentRemark.status}.`);
+    }
+    console.log('   [PASS] Student cannot add internal officer remarks.');
 
     // 15b. Official reviewing student registrations (/api/admin/students)
     const adminReviewStudents = await request('/api/admin/students', {

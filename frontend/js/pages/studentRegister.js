@@ -42,9 +42,10 @@ function renderStudentRegisterPage(container) {
             <label class="form-label" for="regUserType">User Type *</label>
             <select id="regUserType" class="form-control" required style="background: var(--color-surface);">
               <option value="">Select User Type</option>
+              <option value="Student" selected>Student (Grievance Petitioner)</option>
               <option value="Faculty">Faculty Member</option>
               <option value="Stakeholder">Stakeholder (Dept. Head / Industry Partner)</option>
-              <option value="Institution Representative">Institution Representative (Student)</option>
+              <option value="Institution Representative">Institution Representative</option>
             </select>
           </div>
 
@@ -227,9 +228,9 @@ function renderStudentRegisterPage(container) {
     const confirmPassword = document.getElementById('regStudentConfirmPassword').value;
 
     // Validate userType first
-    const allowedUserTypes = ['Faculty', 'Stakeholder', 'Institution Representative'];
+    const allowedUserTypes = ['Student', 'Faculty', 'Stakeholder', 'Institution Representative'];
     if (!userType || !allowedUserTypes.includes(userType)) {
-      showAlert('Please select a valid User Type (Faculty, Stakeholder, or Institution Representative).');
+      showAlert('Please select a valid User Type (Student, Faculty, Stakeholder, or Institution Representative).');
       // Restore dropdown selection after validation error
       const sel = document.getElementById('regUserType');
       if (sel) sel.value = userType;

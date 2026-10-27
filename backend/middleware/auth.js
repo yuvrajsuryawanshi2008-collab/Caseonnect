@@ -1,8 +1,17 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const Student = require('../models/Student');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'caseconnect_super_secret_jwt_key_2026';
+// A random development key keeps local runs usable without a .env file. Production
+// must always provide a stable secret so tokens cannot be forged or invalidated silently.
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production'
+  ? null
+  : crypto.randomBytes(32).toString('hex'));
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set to a strong, stable secret in production.');
+}
 
 async function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -16,15 +25,16 @@ async function authenticateToken(req, res, next) {
     const decoded = jwt.verify(token, JWT_SECRET);
     let account = null;
 
-    if (decoded.role === 'STUDENT') {
+  const GENERIC_USER_ROLES = ['STUDENT','ROLE_FACULTY','ROLE_STAKEHOLDER','ROLE_INSTITUTION_REP'];
+
+    if (GENERIC_USER_ROLES.includes(decoded.role)) {
       account = await Student.findById(decoded.id);
       if (!account || !account.isActive) {
-        return res.status(401).json({ success: false, message: 'Student account is inactive or revoked.' });
+        return res.status(401).json({ success: false, message: 'User account is inactive or revoked.' });
       }
     } else {
       account = await User.findById(decoded.id);
       if (!account) {
-        // Fallback check in student collection in case token didn't contain explicit role
         account = await Student.findById(decoded.id);
       }
 

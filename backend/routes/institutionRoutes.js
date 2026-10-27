@@ -28,12 +28,13 @@ router.get('/', authenticateToken, async (req, res, next) => {
 
     if (query && query.trim()) {
       const q = query.trim();
-      const regex = new RegExp(q, 'i');
+      // The PostgreSQL adapter supports parameterized $regex filters. Passing a
+      // JavaScript RegExp here is not serializable to SQL and breaks search.
       filter.$or = [
-        { name: regex },
-        { permanentId: regex },
-        { city: regex },
-        { state: regex }
+        { name: { $regex: q, $options: 'i' } },
+        { permanentId: { $regex: q, $options: 'i' } },
+        { city: { $regex: q, $options: 'i' } },
+        { state: { $regex: q, $options: 'i' } }
       ];
     }
 
@@ -70,7 +71,8 @@ router.get('/', authenticateToken, async (req, res, next) => {
 router.get('/:id', authenticateToken, async (req, res, next) => {
   try {
     let inst = null;
-    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+    const isIdFormat = /^[0-9a-fA-F-]{24,36}$/.test(req.params.id);
+    if (isIdFormat) {
       inst = await Institution.findById(req.params.id);
     }
     if (!inst) {
@@ -90,7 +92,8 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
 router.get('/:id/profile-360', authenticateToken, async (req, res, next) => {
   try {
     let institution = null;
-    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+    const isIdFormat = /^[0-9a-fA-F-]{24,36}$/.test(req.params.id);
+    if (isIdFormat) {
       institution = await Institution.findById(req.params.id);
     }
     if (!institution) {

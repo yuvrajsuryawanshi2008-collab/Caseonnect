@@ -119,15 +119,9 @@ router.post('/register', async (req, res, next) => {
       institutionId: institutionId || null,
       designation: designation || 'Institutional Scrutiny Officer',
       phoneNumber: phoneNumber ? phoneNumber.trim() : '',
-      isActive: true,
-      lastLogin: new Date()
+      isActive: false,
+      lastLogin: null
     });
-
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role, bureauId: newUser.bureauId },
-      JWT_SECRET,
-      { expiresIn: '12h' }
-    );
 
     await logAuditEvent({
       user: newUser,
@@ -135,7 +129,7 @@ router.post('/register', async (req, res, next) => {
       entityType: 'User',
       entityId: String(newUser._id),
       ipAddress: req.ip,
-      details: `New official registered: ${newUser.fullName} (${newUser.employeeId}) assigned to bureau ${newUser.bureauId}.`
+      details: `New official registration submitted: ${newUser.fullName} (${newUser.employeeId}) for bureau ${newUser.bureauId}; approval required.`
     });
 
     const safeUser = newUser.toObject ? newUser.toObject() : { ...newUser };
@@ -143,8 +137,7 @@ router.post('/register', async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Official account registered successfully.',
-      token,
+      message: 'Registration submitted. A Super Admin must approve your account before you can sign in.',
       user: safeUser
     });
   } catch (err) {
@@ -197,7 +190,8 @@ router.post('/change-password', authenticateToken, async (req, res, next) => {
 // STUDENT AUTHENTICATION & REGISTRATION ENDPOINTS
 // =========================================================================
 
-// POST /api/auth/student/register - Register a new student account
+// POST /api/auth/student/register - Register a new student/portal user account
+// Backward-compatible: accepts optional userType (defaults to 'Student')
 router.post('/student/register', async (req, res, next) => {
   try {
     const { 
@@ -209,9 +203,13 @@ router.post('/student/register', async (req, res, next) => {
       academicYear, 
       studentIdNumber, 
       phoneNumber, 
-      password, 
-      confirmPassword 
+      password
     } = req.body;
+
+    // Backward compat: confirmPassword may be omitted (treat as matching)
+    const confirmPassword = req.body.confirmPassword !== undefined ? req.body.confirmPassword : password;
+    // userType defaults to 'Student' for this backward-compat endpoint
+    const userType = req.body.userType || 'Student';
 
     // 1. Required fields presence check
     if (!fullName || !email || !college || !course || !branch || !academicYear || !password) {
@@ -285,7 +283,10 @@ router.post('/student/register', async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // 8. Create Student Profile in MongoDB
+    // 8. Create Student/User Profile in Supabase PostgreSQL
+    // Map userType → role (default 'Student' → 'STUDENT')
+    const mappedRole = USER_TYPE_TO_ROLE[userType] || 'STUDENT';
+
     const newStudent = await Student.create({
       fullName: fullName.trim(),
       email: normalizedEmail,
@@ -296,7 +297,8 @@ router.post('/student/register', async (req, res, next) => {
       academicYear: academicYear.trim(),
       studentIdNumber: studentIdNumber ? studentIdNumber.trim() : '',
       phoneNumber: phoneNumber ? phoneNumber.trim() : '',
-      role: 'STUDENT',
+      role: mappedRole,
+      userType: userType,
       isActive: true,
       lastLogin: new Date()
     });
@@ -305,7 +307,7 @@ router.post('/student/register', async (req, res, next) => {
     const token = jwt.sign(
       { 
         id: newStudent._id, 
-        role: 'STUDENT', 
+        role: mappedRole,
         email: newStudent.email, 
         fullName: newStudent.fullName 
       },
@@ -316,12 +318,12 @@ router.post('/student/register', async (req, res, next) => {
     // 10. Audit Trail Logging
     try {
       await logAuditEvent({
-        user: { fullName: newStudent.fullName, role: 'STUDENT' },
+        user: { fullName: newStudent.fullName, role: mappedRole },
         action: 'STUDENT_REGISTERED',
         entityType: 'Student',
         entityId: String(newStudent._id),
         ipAddress: req.ip,
-        details: `Student ${newStudent.fullName} registered under institution ${newStudent.college}.`
+        details: `${userType} ${newStudent.fullName} registered under institution ${newStudent.college}.`
       });
     } catch (auditErr) {
       console.warn('[Audit Warning] Could not record student registration:', auditErr.message);
@@ -332,13 +334,13 @@ router.post('/student/register', async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Student registration completed successfully.',
+      message: `${userType} registration completed successfully.`,
       token,
       student: safeStudent,
       user: safeStudent
     });
   } catch (err) {
-    if (err.code === 11000) {
+    if (err.code === '23505' || err.code === 11000) {
       return res.status(409).json({
         success: false,
         message: 'A student account with this email address already exists.'
@@ -391,7 +393,7 @@ router.post('/student/login', async (req, res, next) => {
     const token = jwt.sign(
       { 
         id: student._id, 
-        role: 'STUDENT', 
+        role: student.role || 'STUDENT', 
         email: student.email, 
         fullName: student.fullName 
       },
@@ -430,10 +432,11 @@ router.post('/student/login', async (req, res, next) => {
 // GET /api/auth/student/profile - Authenticated Student profile retrieval
 router.get('/student/profile', authenticateToken, async (req, res, next) => {
   try {
-    if (req.user.role !== 'STUDENT') {
+    const PORTAL_ROLES = ['STUDENT', 'ROLE_FACULTY', 'ROLE_STAKEHOLDER', 'ROLE_INSTITUTION_REP'];
+    if (!PORTAL_ROLES.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Access restricted to student accounts.'
+        message: 'Access restricted to user portal accounts.'
       });
     }
 
@@ -461,10 +464,11 @@ router.get('/student/profile', authenticateToken, async (req, res, next) => {
 // PUT /api/auth/student/profile - Authenticated Student profile update
 router.put('/student/profile', authenticateToken, async (req, res, next) => {
   try {
-    if (req.user.role !== 'STUDENT') {
+    const PORTAL_ROLES = ['STUDENT', 'ROLE_FACULTY', 'ROLE_STAKEHOLDER', 'ROLE_INSTITUTION_REP'];
+    if (!PORTAL_ROLES.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Access restricted to student accounts.'
+        message: 'Access restricted to user portal accounts.'
       });
     }
 
@@ -550,7 +554,7 @@ router.post('/user/register', async (req, res, next) => {
     } = req.body;
 
     // Validate userType
-    const allowedUserTypes = ['Faculty', 'Stakeholder', 'Institution Representative'];
+    const allowedUserTypes = ['Student', 'Faculty', 'Stakeholder', 'Institution Representative'];
     if (!userType || !allowedUserTypes.includes(userType)) {
       return res.status(400).json({
         success: false,
@@ -651,7 +655,7 @@ router.post('/user/register', async (req, res, next) => {
       student: safeUser
     });
   } catch (err) {
-    if (err.code === 11000) {
+    if (err.code === '23505' || err.code === 11000) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
     next(err);
@@ -717,17 +721,6 @@ router.post('/user/login', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
-
-// Also keep old student/* routes as backward-compatible aliases
-// POST /api/auth/student/register → proxies to same logic
-router.post('/student/register', (req, res, next) => {
-  // Default userType to Institution Representative for backward compat
-  if (!req.body.userType) req.body.userType = 'Institution Representative';
-  if (!req.body.confirmPassword) req.body.confirmPassword = req.body.password;
-  // Re-route internally
-  req.url = '/user/register';
-  router.handle(req, res, next);
 });
 
 module.exports = router;
